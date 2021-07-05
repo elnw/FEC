@@ -63,18 +63,18 @@ namespace TM.FECentralizada.Atis.Response
 
                 Tools.Logging.Info("Inicio : Procesar documentos de BD Atis");
 
-                Invoice(ParametersInvoce);
+                //Invoice(ParametersInvoce);
                 /*Bill(ParametersBill);
                 CreditNote(ParametersCreditNote);
                 DebitNote(ParametersDebitNote);*/
                 //parallel invoke
 
-               /* Parallel.Invoke(
+                Parallel.Invoke(
                     ()=> Invoice(ParametersInvoce),
                     () =>  Bill(ParametersBill),
                     () =>  CreditNote(ParametersCreditNote),
                     () => DebitNote(ParametersDebitNote)
-                    );*/
+                    );
 
 
             }

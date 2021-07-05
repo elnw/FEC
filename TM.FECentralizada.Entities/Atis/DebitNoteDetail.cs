@@ -31,7 +31,5 @@ namespace TM.FECentralizada.Entities.Atis
         public string codSistema { get; set; }
         public string codigoCarga { get; set; }
         public string nombreArchivo { get; set; }
-        public string codigoImporteReferencial { get; set; }
-        public string importeReferencial { get; set; }
     }
 }

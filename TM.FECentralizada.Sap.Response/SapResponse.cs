@@ -89,33 +89,172 @@ namespace TM.FECentralizada.Sap.Response
 
         private void Invoice(List<Parameters> oListParameters)
         {
-            //
-            Tools.Logging.Info("Inicio : Obtener documentos de BD Isis - Facturas");
-            //var ListInvoceHeader = Business.Isis.GetInvoceHeader();
-            //var ListInvoceDetail = Business.Isis.GetInvoceDetail();
+            ServiceConfig serviceConfig;
+            Mail mailConfig;
+            FileServer fileServerConfig;
+
+            DateTime timestamp = DateTime.Now;
+            List<string> messagesResponse;
+            List<ResponseFile> responseFiles;
+            int auditId;
+
+            Tools.Logging.Info("Inicio: Obtener parámetros para lectura");
+
+            Parameters configParameter = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.KEY_CONFIG);
+            serviceConfig = Business.Common.GetParameterDeserialized<ServiceConfig>(configParameter);
+            if (configParameter != null)
+            {
+                Parameters ftpParameter = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.FTP_CONFIG_INPUT);
+                Parameters ftpParameterOut = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.FTP_CONFIG_OUTPUT);
+
+                Tools.Logging.Info("Inicio: Descargar archivos de respuesta de gfiscal - Sap Response");
+                if (ftpParameter != null)
+                {
+                    fileServerConfig = Business.Common.GetParameterDeserialized<Entities.Common.FileServer>(ftpParameter);
+
+                    messagesResponse = new List<string>();
+                    responseFiles = Business.Common.DownloadFileOutput(fileServerConfig, messagesResponse, "RPTA_FACT_04");
 
 
-            Tools.Logging.Info("Inicio : Registrar Auditoria");
+
+                    if (responseFiles != null && responseFiles.Count > 0)
+                    {
+                        Tools.Logging.Info("Inicio: Insertar auditoria - Sap Response");
+                        auditId = TM.FECentralizada.Business.Common.InsertAudit(DateTime.Now.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT), 4, Tools.Constants.NO_LEIDO, responseFiles.Count, 1, serviceConfig.Norm);
+
+                        Tools.Logging.Info("Inicio:  Obtener configuración de email - Sap Response");
+                        Parameters mailParameter = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.MAIL_CONFIG);
+                        mailConfig = Business.Common.GetParameterDeserialized<Entities.Common.Mail>(mailParameter);
+
+                        if (mailConfig != null)
+                        {
+                            if (messagesResponse.Count > 0)
+                            {
+                                Business.Common.SendFileNotification(mailConfig, messagesResponse);
+                            }
+                            Business.Common.UpdateAudit(auditId, Tools.Constants.RETORNO_GFISCAL, 1);
+
+                            Tools.Logging.Info("Inicio: Actualizar documentos en FECentralizada - Atis Response");
+
+                            Business.Common.UpdateInvoiceState(responseFiles);
+
+                            Tools.Logging.Info("Inicio: Envio archivo respuesta a Legado - Sap Response");
+
+                            Tools.Logging.Info("Inicio : Obtener Parámetros de la Estructura del Archivo.");
+                            Parameters SpecFileOut = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.FTP_SPEC_OUT);
+                            Tools.Logging.Info("Fin : Obtener Parámetros  de la Estructura del Archivo.");
+
+                            if (SpecFileOut != null)
+                            {
+                                var SpecBody = SpecFileOut.ValueJson.Split('|');
+
+                                Tools.Logging.Info($"Inicio : Armado de archivo de respuesta a Legado - Sap Response");
+
+                                List<string> ListDataFile = new List<string>();
+                                foreach (var item in responseFiles)
+                                {
+                                    var row = @"" +
+                                    item.estado.PadRight(int.Parse(SpecBody[0]), ' ') + "" +
+                                    item.numDocEmisor.PadRight(int.Parse(SpecBody[1]), ' ') + "" +
+                                    item.tipoDocumento.PadRight(int.Parse(SpecBody[2]), ' ') + "" +
+                                    item.serieNumero.PadRight(int.Parse(SpecBody[3]), ' ') + "" +
+                                    item.codigoSunat.PadRight(int.Parse(SpecBody[4]), ' ') + "" +
+                                    item.mensajeSunat.PadRight(int.Parse(SpecBody[5]), ' ') + "" +
+                                    item.fechaDeclaracion.PadRight(int.Parse(SpecBody[6]), ' ') + "" +
+                                    item.fechaEmision.PadRight(int.Parse(SpecBody[7]), ' ') + "" +
+                                    item.firma.PadRight(int.Parse(SpecBody[8]), ' ') + "" +
+                                    item.resumen.PadRight(int.Parse(SpecBody[9]), ' ') + "" +
+                                    item.codSistema.PadRight(int.Parse(SpecBody[10]), ' ') + "" +
+                                    item.adicional1.PadRight(int.Parse(SpecBody[11]), ' ') + "" +
+                                    item.adicional2.PadRight(int.Parse(SpecBody[12]), ' ') + "" +
+                                    item.adicional3.PadRight(int.Parse(SpecBody[13]), ' ') + "" +
+                                    item.adicional4.PadRight(int.Parse(SpecBody[14]), ' ') + "" +
+                                    item.adicional5.PadLeft(int.Parse(SpecBody[15]), ' ');
 
 
-            Tools.Logging.Info("Inicio : Validar Documentos ");
+                                    ListDataFile.Add(row);
+                                }
 
-            Tools.Logging.Info("Inicio : Notificación de Validación");
 
-            Tools.Logging.Info("Inicio : Actualizo Auditoria");
+                                try
+                                {
+                                    Tools.Logging.Info($"Inicio : Envío de Archivo Respuesta - Sap Response.");
+                                    string FileName = $"RPTA_FACT_{timestamp.ToString("yyyyMMdd")}_230000.txt";
+                                    if (ftpParameterOut != null)
+                                    {
+                                        FileServer fileServerConfigOut = Business.Common.GetParameterDeserialized<Entities.Common.FileServer>(ftpParameterOut);
 
-            Tools.Logging.Info("Inicio : Insertar Documentos Validados ");
+                                        var currentResponseFile = Tools.FileServer.DownloadFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName);
 
-            Tools.Logging.Info("Inicio : Valido Documentos insertados ");
+                                        if (currentResponseFile != null && currentResponseFile.Count > 0)
+                                        {
+                                            Tools.FileServer.DeleteFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName);
+                                        }
 
-            Tools.Logging.Info("Inicio : Lees  Documentos insertados ");
+                                        currentResponseFile.AddRange(ListDataFile);
+                                        byte[] ResultBytes = Tools.Common.CreateFileText(currentResponseFile);
 
-            Tools.Logging.Info("Inicio : enviar GFiscal ");
+                                        Tools.FileServer.UploadFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName, ResultBytes);
 
-            Tools.Logging.Info("Inicio :  Notificación de envio  GFiscal ");
+                                        Tools.Logging.Info("Inicio :  Mover archivos procesados a ruta PROC ");
+                                        List<String> inputFilesFTP = Tools.FileServer.ListDirectory(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory);
+                                        inputFilesFTP = inputFilesFTP.Where(x => x.StartsWith("RPTA_FACT_04")).ToList();
+                                        foreach (string file in inputFilesFTP)
+                                        {
+                                            Tools.FileServer.DownloadFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory, file, true, System.IO.Path.GetTempPath());
+                                            Tools.FileServer.UploadFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory + "/PROC/", file, System.IO.File.ReadAllBytes(System.IO.Path.GetTempPath() + "/" + file));
+                                            Tools.FileServer.DeleteFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory, file);
+                                        };
+                                        Tools.Logging.Info("Inicio : Mover archivos procesados a ruta PROC ");
 
-            Tools.Logging.Info("Inicio : Actualizo Auditoria");
+                                    }
+                                    else
+                                    {
+                                        Tools.Logging.Error("No se encontró el parámetro de configuracion FTP_OUTPUT - Sap Response");
+                                    }
+                                    Tools.Logging.Info($"Fin : Envío de Archivo Respuesta - Sap Response.");
+                                }
+                                catch (Exception ex)
+                                {
+                                    Tools.Logging.Error($"Error : Envío de Archivo Respuesta - Sap Response = {ex.Message}");
+                                }
 
+                            }
+                            else
+                            {
+                                Tools.Logging.Error("No se encontró el parámetro de configuracion SPEC_OUT - Sap Response");
+                            }
+
+                            Tools.Logging.Info("Fin: Envio archivo respuesta a Legado - Sap Response");
+
+                            Tools.Logging.Info("Inicio: Actualizar auditoria - Sap Response");
+                            Business.Common.UpdateAudit(auditId, Tools.Constants.ENVIADO_LEGADO, 1);
+
+
+                        }
+                        else
+                        {
+                            Tools.Logging.Error("No se encontró el parámetro de configuracion MAILCONFIG - Atis Response");
+                        }
+
+
+
+
+                    }
+                    else
+                    {
+                        Tools.Logging.Info("No se encontraron archivos por procesar - Sap Response");
+                        auditId = TM.FECentralizada.Business.Common.InsertAudit(DateTime.Now.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT), 2, Tools.Constants.NO_LEIDO, 0, 1, 193);
+                    }
+
+
+                }
+
+            }
+            else
+            {
+                Tools.Logging.Error("No se encontró el parámetro de configuracion KEYCONFIG - Sap Response");
+            }
         }
         private void Bill(List<Parameters> oListParameters)
         {
