@@ -722,7 +722,7 @@ namespace TM.FECentralizada.Atis.Read
                             }
 
 
-                            Tools.Logging.Info("Inicio: Obtener configuración de correos electronicos - Facturas Atis");
+                            Tools.Logging.Info("Inicio: Obtener configuración de correos electronicos - Notas de debito Atis");
 
                             Parameters mailParameter = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.MAIL_CONFIG);
 
@@ -797,7 +797,7 @@ namespace TM.FECentralizada.Atis.Read
                                 }
                                 else
                                 {
-                                    Tools.Logging.Error($"No se pudo recuperar el id de auditoria - Facturas Atis");
+                                    Tools.Logging.Error($"No se pudo recuperar el id de auditoria - Notas de debito Atis");
                                     Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
                                 }
                             }

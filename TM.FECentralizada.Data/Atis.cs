@@ -317,7 +317,7 @@ namespace TM.FECentralizada.Data
                         nombreArchivo = filename,
                         origen = "MA",
                         estado = "PE",
-                        fechaRegistro = timestamp.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT),
+                        fechaRegistro = timestamp.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT)
                     };
                     ListHeaders.Add(objBillHeader);
                 }

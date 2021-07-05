@@ -31,7 +31,5 @@ namespace TM.FECentralizada.Entities.Sap
         public string codSistema { get; set; }
         public string codigoCarga { get; set; }
         public string nombreArchivo { get; set; }
-        public string codigoImporteReferencial { get; set; }
-        public string importeReferencial { get; set; }
     }
 }

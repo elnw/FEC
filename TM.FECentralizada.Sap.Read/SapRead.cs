@@ -64,8 +64,9 @@ namespace TM.FECentralizada.Sap.Read
                     List<Parameters> ParametersCreditNote = ParamsResponse.FindAll(x => x.KeyDomain.ToUpper().Equals(Tools.Constants.SapRead_CreditNote.ToUpper())).ToList();
                     List<Parameters> ParametersDebitNote = ParamsResponse.FindAll(x => x.KeyDomain.ToUpper().Equals(Tools.Constants.SapRead_DebitNote.ToUpper())).ToList();
 
-                    Invoice(ParametersInvoce);
+                    //Invoice(ParametersInvoce);
                     //Bill(ParametersBill);
+                    DebitNote(ParametersDebitNote);
                     Tools.Logging.Info("Inicio : Procesar documentos de Archivos Sap");
                     //Parallel.Invoke(
                     //           () => Invoice(ParametersInvoce),
@@ -258,7 +259,7 @@ namespace TM.FECentralizada.Sap.Read
             Mail mailConfig;
             FileServer fileServerConfig;
             bool isValid;
-            string validationMessage = "";
+            List<string> validationMessage = new List<string>();
             int auditId;
             int intentos = 0;
             DateTime timestamp = DateTime.Now;
@@ -294,7 +295,6 @@ namespace TM.FECentralizada.Sap.Read
                             List<BillHeader> ListBillHeader = new List<BillHeader>();
                             List<BillDetail> ListBillDetail = new List<BillDetail>();
 
-
                             var billDocuments = Business.Sap.GetBills(inputFilesFTP, fileServerConfig, ref intentos, serviceConfig.maxAttemps, timestamp);
 
                             ListBillHeader = billDocuments.Item1;
@@ -316,9 +316,9 @@ namespace TM.FECentralizada.Sap.Read
                                 {
 
                                     Tools.Logging.Info("Inicio : Validar Documentos ");
-                                    isValid = true;
-                                    isValid = Business.Sap.ValidateBills(ListBillHeader, ref validationMessage);
-                                    isValid &= Business.Sap.ValidateBillDetails(ListBillDetail, ref validationMessage);
+
+                                    isValid = Business.Sap.ValidateBills(ListBillHeader, validationMessage);
+                                    isValid &= Business.Sap.ValidateBillDetails(ListBillDetail, validationMessage);
 
 
                                     //eliminar
@@ -456,30 +456,10 @@ namespace TM.FECentralizada.Sap.Read
                             List<CreditNoteHeader> ListCreditNoteHeader = new List<CreditNoteHeader>();
                             List<CreditNoteDetail> ListCreditNoteDetail = new List<CreditNoteDetail>();
 
-                            List<string> data;
+                            var documents = Business.Sap.GetCreditNotes(inputFilesFTP, fileServerConfig, ref intentos, serviceConfig.maxAttemps, timestamp);
 
-                            foreach (string filename in inputFilesFTP)
-                            {
-                                data = Tools.FileServer.DownloadFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory, filename);
-                                string serie = "";
-                                for (int i = 0; i < data.Count(); i++)
-                                {
-                                    if (data[i].StartsWith("C"))
-                                    {
-                                        serie = data[i].Split('|')[1].Trim();
-                                    }
-                                    if (data[i].StartsWith("D"))
-                                    {
-                                        data[i] = serie + "|" + data[i];
-                                    }
-                                }
-
-                                List<CreditNoteHeader> ListInvoceHeader2 = Business.Sap.GetCreditNoteHeader(filename, data, timestamp, ref intentos, serviceConfig.maxAttemps);
-                                List<CreditNoteDetail> ListInvoceDetail2 = Business.Sap.GetCreditNoteDetail(filename, data, timestamp);
-                                ListCreditNoteHeader.AddRange(ListInvoceHeader2);
-                                ListCreditNoteDetail.AddRange(ListInvoceDetail2);
-                            }
-
+                            ListCreditNoteHeader = documents.Item1;
+                            ListCreditNoteDetail = documents.Item2;
 
                             Tools.Logging.Info("Inicio: Obtener configuración de correos electronicos - Facturas Sap");
 
@@ -501,7 +481,7 @@ namespace TM.FECentralizada.Sap.Read
                                     isValid = Business.Sap.CheckCreditNoteHeaders(ListCreditNoteHeader, validationMessage);
 
                                     ListCreditNoteDetail.RemoveAll(x => !ListCreditNoteHeader.Select(y => y.serieNumero).Contains(x.serieNumero));
-
+                                    ListCreditNoteHeader.RemoveAll(x => !ListCreditNoteDetail.Select(y => y.serieNumero).Contains(x.serieNumero));
 
                                     Tools.Logging.Info("Inicio : Notificación de Validación");
 
@@ -638,32 +618,12 @@ namespace TM.FECentralizada.Sap.Read
                             List<DebitNoteHeader> ListDebitNoteHeader = new List<DebitNoteHeader>();
                             List<DebitNoteDetail> ListDebitNoteDetail = new List<DebitNoteDetail>();
 
-                            List<string> data;
+                            var documents = Business.Sap.GetDebitNotes(inputFilesFTP, fileServerConfig, ref intentos, serviceConfig.maxAttemps, timestamp);
 
-                            foreach (string filename in inputFilesFTP)
-                            {
-                                data = Tools.FileServer.DownloadFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory, filename);
-                                string serie = "";
-                                for (int i = 0; i < data.Count(); i++)
-                                {
-                                    if (data[i].StartsWith("C"))
-                                    {
-                                        serie = data[i].Split('|')[1].Trim();
-                                    }
-                                    if (data[i].StartsWith("D"))
-                                    {
-                                        data[i] = serie + "|" + data[i];
-                                    }
-                                }
+                            ListDebitNoteHeader = documents.Item1;
+                            ListDebitNoteDetail = documents.Item2;
 
-                                List<DebitNoteHeader> ListInvoceHeader2 = Business.Sap.GetDebitNoteHeader(filename, data, timestamp, ref intentos, serviceConfig.maxAttemps);
-                                List<DebitNoteDetail> ListInvoceDetail2 = Business.Sap.GetDebitNoteDetail(filename, data, timestamp);
-                                ListDebitNoteHeader.AddRange(ListInvoceHeader2);
-                                ListDebitNoteDetail.AddRange(ListInvoceDetail2);
-                            }
-
-
-                            Tools.Logging.Info("Inicio: Obtener configuración de correos electronicos - Facturas Sap");
+                            Tools.Logging.Info("Inicio: Obtener configuración de correos electronicos - Notas de débito Sap");
 
                             Parameters mailParameter = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.MAIL_CONFIG);
 
@@ -683,6 +643,8 @@ namespace TM.FECentralizada.Sap.Read
                                     isValid = Business.Sap.CheckDebitNotes(ListDebitNoteHeader, validationMessages);
 
                                     ListDebitNoteDetail.RemoveAll(x => !ListDebitNoteHeader.Select(y => y.serieNumero).Contains(x.serieNumero));
+                                    ListDebitNoteHeader.RemoveAll(x => !ListDebitNoteDetail.Select(y => y.serieNumero).Contains(x.serieNumero));
+
 
                                     Tools.Logging.Info("Inicio : Notificación de Validación");
 

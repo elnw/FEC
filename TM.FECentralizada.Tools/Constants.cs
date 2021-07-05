@@ -101,7 +101,7 @@
         public const string SapRead = "Sap_Lectura";
         public const string SapRead_Invoice = "Factura";
         public const string SapRead_Bill = "Boleta";
-        public const string SapRead_CreditNote = "CreditNote";
+        public const string SapRead_CreditNote = "NotaCredito";
         public const string SapRead_DebitNote = "DebitNote";
         #endregion
 

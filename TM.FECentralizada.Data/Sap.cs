@@ -362,5 +362,107 @@ namespace TM.FECentralizada.Data
             return new Tuple<List<CreditNoteHeader>, List<CreditNoteDetail>>(Headers, Details);
         }
 
+        public static Tuple<List<DebitNoteHeader>, List<DebitNoteDetail>> GetDebitNotes(List<string> files, FileServer fileServer, ref bool debeRepetir, DateTime timestamp)
+        {
+            List<DebitNoteHeader> Headers = new List<DebitNoteHeader>();
+            List<DebitNoteDetail> Details = new List<DebitNoteDetail>();
+            string lastSerialNumber = "";
+            try
+            {
+
+                foreach (var file in files)
+                {
+                    var fileLines = Tools.FileServer.DownloadFile(fileServer.Host, fileServer.Port, fileServer.User, fileServer.Password, fileServer.Directory, file);
+
+                    foreach (var line in fileLines)
+                    {
+                        var fields = line.Split(Tools.Constants.FIELD_SEPARATOR);
+
+                        if (fields[0] == "C")
+                        {
+                            lastSerialNumber = fields[1];
+                            Headers.Add(new DebitNoteHeader
+                            {
+                                serieNumero = fields[1].Trim(),
+                                fechaEmision = fields[2].Trim(),
+                                horadeEmision = fields[3].Trim(),
+                                codigoSerieNumeroAfectado = fields[4].Trim(),
+                                tipoMoneda = fields[5].Trim(),
+                                numeroDocumentoEmisor = fields[6].Trim(),
+                                tipoDocumentoAdquiriente = fields[7].Trim(),
+                                numeroDocumentoAdquiriente = fields[8].Trim(),
+                                razonSocialAdquiriente = fields[9].Trim(),
+                                direccionAdquiriente = fields[10].Trim(),
+                                tipoDocRefPrincipal = fields[11].Trim(),
+                                numeroDocRefPrincipal = fields[12].Trim(),
+                                tipoReferencia_1 = fields[13].Trim(),
+                                numeroDocumentoReferencia_1 = fields[14].Trim(),
+                                tipoReferencia_2 = fields[15].Trim(),
+                                numeroDocumentoReferencia_2 = fields[16].Trim(),
+                                motivoDocumento = fields[17].Trim(),
+                                totalVVNetoOpGravadas = String.IsNullOrWhiteSpace(fields[18].Trim()) ? "0" : Convert.ToString(Double.Parse(fields[18].Trim())),
+                                totalVVNetoOpNoGravada = String.IsNullOrWhiteSpace(fields[19].Trim()) ? "0" : Convert.ToString(Double.Parse(fields[19].Trim())),
+                                conceptovvnetoopnogravada = String.IsNullOrWhiteSpace(fields[20].Trim()) ? "0" : Convert.ToString(Double.Parse(fields[20].Trim())),
+                                totalVVNetoOpExoneradas = String.IsNullOrWhiteSpace(fields[21].Trim()) ? "0" : Convert.ToString(Double.Parse(fields[21].Trim())),
+                                conceptovvnetoopexoneradas = String.IsNullOrWhiteSpace(fields[22].Trim()) ? "0" : Convert.ToString(Double.Parse(fields[22].Trim())),
+                                totalVVNetoOpGratuitas = String.IsNullOrWhiteSpace(fields[23].Trim()) ? "0" : Convert.ToString(Double.Parse(fields[23].Trim())),
+                                conceptoVVNetoOpGratuitas = String.IsNullOrWhiteSpace(fields[24].Trim()) ? "0" : Convert.ToString(Double.Parse(fields[24].Trim())),
+                                totalVVNetoExportacion = String.IsNullOrWhiteSpace(fields[25].Trim()) ? "0" : Convert.ToString(Double.Parse(fields[25].Trim())),
+                                conceptoVVExportacion = String.IsNullOrWhiteSpace(fields[26].Trim()) ? "0" : Convert.ToString(Double.Parse(fields[26].Trim())),
+                                totalIgv = String.IsNullOrWhiteSpace(fields[27].Trim()) ? "0" : Convert.ToString(Double.Parse(fields[27].Trim())),
+                                totalVenta = String.IsNullOrWhiteSpace(fields[28].Trim()) ? "0" : Convert.ToString(Double.Parse(fields[28].Trim())),
+                                leyendas = fields[29].Trim(),
+                                datosAdicionales = fields[30].Trim(),
+                                codigoEstablecimientoSunat = fields[31].Trim(),
+                                montoTotalImpuestos = Convert.ToString(Double.Parse(fields[32].Trim())),
+                                sumImpuestosOpGratuitas = String.IsNullOrWhiteSpace(fields[33].Trim()) ? "0" : Convert.ToString(Double.Parse(fields[31].Trim())),
+                                monRedImportTotal = String.IsNullOrWhiteSpace(fields[34].Trim()) ? "0" : Convert.ToString(Double.Parse(fields[32].Trim())),
+                                codSistema = "04",
+                                codigoCarga = $"NDEB_{timestamp.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT)}",
+                                nombreArchivo = file,
+                                origen = "MA",
+                                estado = "PE",
+                                fechaRegistro = timestamp.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT),
+                            });
+                        }
+                        else
+                        {
+                            Details.Add(new DebitNoteDetail
+                            {
+                                serieNumero = lastSerialNumber,
+                                numeroOrdenItem = (fields[1].Trim()),
+                                unidadMedida = fields[2].Trim(),
+                                cantidad = Convert.ToString((int)Convert.ToDouble(fields[3].Trim())),
+                                codigoProducto = fields[4].Trim(),
+                                codigoProductoSunat = fields[5].Trim(),
+                                descripcion = fields[6].Trim(),
+                                montoBaseIGV = Convert.ToString(Double.Parse(fields[7].Trim())),
+                                importeIGV = Convert.ToString(Double.Parse(fields[8].Trim())),
+                                codigoRazonExoneracion = fields[9].Trim(),
+                                tasaIGV = Convert.ToString(Double.Parse(fields[10].Trim())),
+                                importeUnitarioSinImpuesto = String.IsNullOrWhiteSpace(fields[11].Trim()) ? "0" : Convert.ToString(Double.Parse(fields[11].Trim())),
+                                importeTotalSinImpuesto = Convert.ToString(Double.Parse(fields[12].Trim())),
+                                montoTotalImpuestoItem = Convert.ToString(Double.Parse(fields[13].Trim())),
+                                codigoImpUnitConImpuesto = fields[14].Trim(),
+                                importeUnitarioConImpuesto = Convert.ToString(Double.Parse(fields[15].Trim())),
+                                codSistema = "04",
+                                codigoCarga = $"NDEB_{timestamp.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT)}",
+                                nombreArchivo = file
+                            });
+                        }
+                    }
+
+                }
+
+
+
+            }
+            catch (Exception ex)
+            {
+                Tools.Logging.Error(ex.Message);
+            }
+
+            return new Tuple<List<DebitNoteHeader>, List<DebitNoteDetail>>(Headers, Details);
+        }
     }
 }
