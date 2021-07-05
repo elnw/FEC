@@ -15,16 +15,16 @@ namespace TM.FECentralizada.Cms.Read
         static void Main()
         {
             Tools.Logging.Configure();
-            /*ServiceBase[] ServicesToRun;
+            ServiceBase[] ServicesToRun;
             ServicesToRun = new ServiceBase[]
             {
                 new CmsRead()
-            };*/
-            //ServiceBase.Run(ServicesToRun);
+            };
+            ServiceBase.Run(ServicesToRun);
 
-            CmsRead ob = new CmsRead();
+            //CmsRead ob = new CmsRead();
 
-            ob.probar();
+            //ob.probar();
         }
     }
 }

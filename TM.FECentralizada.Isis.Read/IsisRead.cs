@@ -65,19 +65,19 @@ namespace TM.FECentralizada.Isis.Read
 
                 if (ParamsResponse != null && ParamsResponse.Any())
                 {
-                    List<Parameters> ParametersInvoce = ParamsResponse.FindAll(x => x.KeyDomain.ToUpper().Equals( Tools.Constants.IsisRead_Bill.ToUpper())).ToList();
+                    List<Parameters> ParametersInvoce = ParamsResponse.FindAll(x => x.KeyDomain.ToUpper().Equals( Tools.Constants.IsisRead_Invoice.ToUpper())).ToList();
                     List<Parameters> ParametersBill = ParamsResponse.FindAll(x => x.KeyDomain.ToUpper().Equals( Tools.Constants.IsisRead_Bill.ToUpper())).ToList();
-                    List<Parameters> ParametersCreditNote = ParamsResponse.FindAll(x => x.KeyDomain.ToUpper().Equals( Tools.Constants.IsisRead_Bill.ToUpper())).ToList();
-                    List<Parameters> ParametersDebitNote = ParamsResponse.FindAll(x => x.KeyDomain.ToUpper().Equals( Tools.Constants.IsisRead_Bill.ToUpper())).ToList();
+                    List<Parameters> ParametersCreditNote = ParamsResponse.FindAll(x => x.KeyDomain.ToUpper().Equals( Tools.Constants.IsisRead_CreditNote.ToUpper())).ToList();
+                    List<Parameters> ParametersDebitNote = ParamsResponse.FindAll(x => x.KeyDomain.ToUpper().Equals( Tools.Constants.IsisRead_DebitNote.ToUpper())).ToList();
 
                     Tools.Logging.Info("Inicio : Procesar documentos de BD Isis");
-                    //Invoice(ParametersInvoce);
-                    Parallel.Invoke(
+                    Invoice(ParametersInvoce);
+                    /*Parallel.Invoke(
                                () => Invoice(ParametersInvoce),
                                () => Bill(ParametersBill),
                                () => CreditNote(ParametersCreditNote),
                                () => DebitNote(ParametersDebitNote)
-                        );
+                        );*/
                     Tools.Logging.Info("Fin : Procesar documentos de BD Isis");
 
                     //Obtengo la Configuración Intervalo de Tiempo

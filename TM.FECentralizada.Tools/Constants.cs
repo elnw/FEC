@@ -107,7 +107,10 @@
 
         #region IsisLectura
         public const string IsisRead = "Isis_Lectura";
-        public const string IsisRead_Bill = "Factura";
+        public const string IsisRead_Bill = "Boleta";
+        public const string IsisRead_Invoice = "Factura";
+        public const string IsisRead_CreditNote = "CreditNote";
+        public const string IsisRead_DebitNote = "DebitNote";
         public const string IsisRead_FileServer_GFiscal = "FileServer_Gfiscal";
 
         public const string IsisRead_Select_Header = @"Select

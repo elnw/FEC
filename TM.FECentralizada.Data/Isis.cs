@@ -15,6 +15,7 @@ namespace TM.FECentralizada.Data
     {
         public static List<InvoiceHeader> ReadInvoiceHeader(DateTime timestamp, ref bool debeRepetir)
         {
+            Tools.Logging.Info("ReadInvoiceHeader");
             List<InvoiceHeader> ListHeaders = new List<InvoiceHeader>();
             InvoiceHeader objBillHeader = new InvoiceHeader();
             try
@@ -22,18 +23,22 @@ namespace TM.FECentralizada.Data
                 //using (OracleConnection connection = (OracleConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.Oracle))
                 using (IfxConnection conn = (IfxConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.Informix))
                 {
+                    Tools.Logging.Info("conn");
                     //using (OracleCommand cmd = new OracleCommand("PKG_PACIFYC_CONSULTAS.SP_LEER_FACTURA_CAB", connection))
                     using (IfxCommand cmd = new IfxCommand(Tools.Constants.IsisRead_Select_Header, conn))
                     {
-
+                        Tools.Logging.Info("  using (IfxCommand cmd = new IfxCommand(Tools.Constants.IsisRead_Select_Header, conn))");
                         conn.Open();
                         cmd.CommandType = CommandType.Text;
 
                         IfxDataReader dr = cmd.ExecuteReader();
+                        Tools.Logging.Info("ExecuteReader");
                         if (dr != null && dr.HasRows)
                         {
+                            Tools.Logging.Info(" if (dr != null && dr.HasRows)");
                             while (dr.Read())
                             {
+                                Tools.Logging.Info("while (dr.Read())");
                                 ListHeaders.Add
                                 (
                                     objBillHeader = new InvoiceHeader()
@@ -91,9 +96,7 @@ namespace TM.FECentralizada.Data
                                     }
                                     );
                                 ListHeaders.Add(objBillHeader);
-                                string ResponseCode = cmd.Parameters["PO_CODIGO_RESPUESTA"].Value.ToString();
-                                string ResponseMessage = cmd.Parameters["PO_MENSAJE_RESPUESTA"].Value.ToString();
-                                Tools.Logging.Info(string.Format("Fin ReadConfiguration = codeResponse:{0}, messageResponse:{1}", ResponseCode, ResponseMessage));
+                                Tools.Logging.Info(string.Format("Fin ReadConfiguration"));
                             }
                         }
                     }
@@ -165,9 +168,7 @@ namespace TM.FECentralizada.Data
                                     );
                                 invoiceDetails.Add(billDetail);
                             }
-                            string ResponseCode = cmd.Parameters["PO_CODIGO_RESPUESTA"].Value.ToString();
-                            string ResponseMessage = cmd.Parameters["PO_MENSAJE_RESPUESTA"].Value.ToString();
-                            Tools.Logging.Info(string.Format("Fin ReadConfiguration = codeResponse:{0}, messageResponse:{1}", ResponseCode, ResponseMessage));
+                            Tools.Logging.Info(string.Format("Fin ReadConfiguration"));
 
 
                         }

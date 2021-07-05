@@ -20,7 +20,7 @@ namespace TM.FECentralizada.Data.Configuration
                     strConnection = ConfigurationManager.ConnectionStrings["Url_ConnectionORACLE"].ConnectionString;
                     return conn.GetConnection(strConnection);
                 case "Informix":
-                    conn = new ConnectionOracle();
+                    conn = new ConnectionInformix();
                     strConnection = ConfigurationManager.ConnectionStrings["Url_ConnectionInformix"].ConnectionString;
                     return conn.GetConnection(strConnection);
                 default: return null;

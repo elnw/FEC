@@ -14,11 +14,10 @@ namespace TM.FECentralizada.Data
     {
 
         public static List<Entities.Common.Parameters> GetParametersByKey(Entities.Common.Parameters oParametersRequest)
-        {
-            List<Entities.Common.Parameters> oListParameter = new List<Entities.Common.Parameters>();
+        {List<Entities.Common.Parameters> oListParameter = new List<Entities.Common.Parameters>();
             try
-            {
-                using (SqlConnection conn = (SqlConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.SQL))
+            {using (SqlConnection conn = (SqlConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.SQL))
+
                 {
                     using (SqlCommand cmd = new SqlCommand("Sp_Obtener_Parametros", conn))
                     {
@@ -29,8 +28,9 @@ namespace TM.FECentralizada.Data
                         cmd.Parameters.Add(new SqlParameter("@pi_key_param", SqlDbType.VarChar ) { Value = oParametersRequest.KeyParam , Direction = ParameterDirection.Input });
                         cmd.Parameters.Add(new SqlParameter("@po_mensaje_respuesta", SqlDbType.VarChar ) { Direction = ParameterDirection.Output , Size = 3000 });
                         cmd.Parameters.Add(new SqlParameter("@po_codigo_respuesta", SqlDbType.VarChar ) {  Direction = ParameterDirection.Output, Size = 50});
-                      
+                        Tools.Logging.Info(" SqlDataReader dr = cmd.ExecuteReader(); antes");
                         SqlDataReader dr = cmd.ExecuteReader();
+                        Tools.Logging.Info(" SqlDataReader dr = cmd.ExecuteReader();");
                         if (dr != null && dr.HasRows)
                         {
                             while (dr.Read())
