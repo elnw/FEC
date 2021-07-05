@@ -261,6 +261,16 @@
         public const string AtisResponse_DebitNote = "NotaDebito";
         #endregion
 
+        #region Trazabilidad
+        public const string Trazabilidad = "Trazabilidad";
+        public const string Cms = "Cms";
+        public const string Atis = "Atis";
+        public const string Pacyfic = "Pacyfic";
+        public const string Sap = "Sap";
+        public const string Isis = "Isis";
+        public const string Backup = "Backup";
+        #endregion
+
         #region Parameters
         public const string KEY_CONFIG = "config";
         public const string MAIL_CONFIG = "mail";
@@ -268,6 +278,9 @@
         public const string FTP_CONFIG_INPUT = "ftp_input";
         public const string FTP_CONFIG_OUTPUT = "ftp_output";
         public const string FTP_SPEC_OUT = "spec_out";
+        public const string PATH_LOG = "path_log";
+        public const string PATH_LOG_READ = "path_log_read";
+        public const string PATH_LOG_RESPONSE = "path_log_response";
 
         #endregion
 

@@ -63,11 +63,16 @@ namespace TM.FECentralizada.Cms.Response
 
                 Tools.Logging.Info("Inicio : Procesar documentos de BD Cms");
 
-                Invoice(ParametersInvoce);
-                Bill(ParametersBill);
-                DebitNote(ParametersDebitNote);
-                CreditNote(ParametersCreditNote);
-                //parallel invoke
+                //Invoice(ParametersInvoce);
+                // Bill(ParametersBill);
+                // DebitNote(ParametersDebitNote);
+                //  CreditNote(ParametersCreditNote);
+                Parallel.Invoke(
+                                () => Invoice(ParametersInvoce),
+                                 () => Bill(ParametersBill),
+                () => CreditNote(ParametersCreditNote),
+                                () => DebitNote(ParametersDebitNote)
+                         );
 
 
             }
@@ -175,6 +180,16 @@ namespace TM.FECentralizada.Cms.Response
                                     if (ftpParameterOut != null)
                                     {
                                         FileServer fileServerConfigOut = Business.Common.GetParameterDeserialized<Entities.Common.FileServer>(ftpParameterOut);
+
+                                        var currentResponseFile = Tools.FileServer.DownloadFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName);
+
+                                        if (currentResponseFile != null && currentResponseFile.Count > 0)
+                                        {
+                                            Tools.FileServer.DeleteFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName);
+                                        }
+
+                                        currentResponseFile.AddRange(ListDataFile);
+                                        ResultBytes = Tools.Common.CreateFileText(currentResponseFile);
                                         Tools.FileServer.UploadFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName, ResultBytes);
 
                                         Tools.Logging.Info("Inicio :  Mover archivos procesados a ruta PROC ");
@@ -335,6 +350,17 @@ namespace TM.FECentralizada.Cms.Response
                                     if (ftpParameterOut != null)
                                     {
                                         FileServer fileServerConfigOut = Business.Common.GetParameterDeserialized<Entities.Common.FileServer>(ftpParameterOut);
+
+                                        var currentResponseFile = Tools.FileServer.DownloadFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName);
+
+                                        if (currentResponseFile != null && currentResponseFile.Count > 0)
+                                        {
+                                            Tools.FileServer.DeleteFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName);
+                                        }
+
+                                        currentResponseFile.AddRange(ListDataFile);
+                                        ResultBytes = Tools.Common.CreateFileText(currentResponseFile);
+
                                         Tools.FileServer.UploadFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName, ResultBytes);
 
                                         Tools.Logging.Info("Inicio :  Mover archivos procesados a ruta PROC ");
@@ -397,7 +423,7 @@ namespace TM.FECentralizada.Cms.Response
                 Tools.Logging.Error("No se encontró el parámetro de configuracion KEYCONFIG - Cms Response");
             }
         }
-            private void CreditNote(List<Parameters> oListParameters)
+        private void CreditNote(List<Parameters> oListParameters)
         {
 
             ServiceConfig serviceConfig;
@@ -494,6 +520,16 @@ namespace TM.FECentralizada.Cms.Response
                                     if (ftpParameterOut != null)
                                     {
                                         FileServer fileServerConfigOut = Business.Common.GetParameterDeserialized<Entities.Common.FileServer>(ftpParameterOut);
+
+                                        var currentResponseFile = Tools.FileServer.DownloadFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName);
+
+                                        if (currentResponseFile != null && currentResponseFile.Count > 0)
+                                        {
+                                            Tools.FileServer.DeleteFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName);
+                                        }
+
+                                        currentResponseFile.AddRange(ListDataFile);
+                                        ResultBytes = Tools.Common.CreateFileText(currentResponseFile);
                                         Tools.FileServer.UploadFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName, ResultBytes);
 
                                         Tools.Logging.Info("Inicio :  Mover archivos procesados a ruta PROC ");
@@ -653,6 +689,19 @@ namespace TM.FECentralizada.Cms.Response
                                     if (ftpParameterOut != null)
                                     {
                                         FileServer fileServerConfigOut = Business.Common.GetParameterDeserialized<Entities.Common.FileServer>(ftpParameterOut);
+
+                                        var currentResponseFile = Tools.FileServer.DownloadFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName);
+
+                                        if (currentResponseFile != null && currentResponseFile.Count > 0)
+                                        {
+                                            Tools.FileServer.DeleteFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName);
+                                        }
+
+                                        currentResponseFile.AddRange(ListDataFile);
+                                        ResultBytes = Tools.Common.CreateFileText(currentResponseFile);
+
+
+
                                         Tools.FileServer.UploadFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName, ResultBytes);
 
                                         Tools.Logging.Info("Inicio :  Mover archivos procesados a ruta PROC ");

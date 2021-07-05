@@ -431,5 +431,66 @@ namespace TM.FECentralizada.Tools
             return ListLinesFile;
         }
 
+        public static String getLastModifiedFileFTP(string strHost, string strPort, string strUserName, string strPassword, string strDirectory, string strFileName)
+        {
+            String lastModifiedFile = "";
+            List<string> ListFileName = new List<string>();
+            try
+            {
+                Logging.Info(string.Format("Inicio ListDirectory:  Host:{0}, Port:{1}, UserName:{2}, Password:{3}, Directory:{4}", strHost, strPort, strUserName, strPassword, strDirectory));
+
+                if (strPort.Equals("21"))
+                {
+                    try
+                    {
+                        Logging.Info(string.Concat("FTP >  FtpWebRequest [WebRequest]"));
+                        FtpWebRequest request = (FtpWebRequest)WebRequest.Create("ftp://" + strHost + strDirectory + strFileName);
+                        request.Method = WebRequestMethods.Ftp.GetDateTimestamp;
+                        request.Credentials = new NetworkCredential(strUserName, strPassword);
+
+                        using (FtpWebResponse response = (FtpWebResponse)request.GetResponse())
+                        {
+                            lastModifiedFile = response.LastModified.ToString();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Tools.Logging.Error(string.Format("Error FTP: al leer los archivos, Exception: {0} ", ex.Message));
+                    }
+                    Logging.Info("Fin ListDirectory FTP.");
+                }
+                else if (strPort.Equals("22"))
+                {
+                    using (Renci.SshNet.SftpClient sftp = new Renci.SshNet.SftpClient(strHost, int.Parse(strPort), strUserName, strPassword))
+                    {
+                        try
+                        {
+                            Logging.Info(string.Concat("Inicio SFTP. Connect()"));
+                            sftp.Connect();
+                            sftp.ChangeDirectory("/");
+                            string directorySftp = strDirectory;
+                            Logging.Info(string.Concat("Inicio ListDirectory SFTP. Directorio = { ", directorySftp, " }"));
+                            var ListFilesSftp = sftp.ListDirectory(directorySftp);
+                            if (ListFilesSftp.Count() > 0)
+                            {
+                                ListFileName = ListFilesSftp.Where(x => !x.IsDirectory && !x.IsSymbolicLink).Select(f => (string)f.Name).ToList();
+                            }
+                            Logging.Info("Fin ListDirectory SFTP.");
+                        }
+                        catch (Exception ex)
+                        {
+                            Tools.Logging.Error(string.Format("Error SFTP: al leer el arrchivo, Exception: {0} ", ex.Message));
+                        }
+                    }
+                    Logging.Info("Fin ListDirectory SFTP.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logging.Error(string.Format("Exception: {0}, Context: {1}, Puerto: {2}", ex, "Error de al intentar conectar al File Server", strPort));
+            }
+            return lastModifiedFile;
+        }
+
     }
 }

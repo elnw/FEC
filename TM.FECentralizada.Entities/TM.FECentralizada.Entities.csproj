@@ -66,6 +66,7 @@
     <Compile Include="Common\ResponseFile.cs" />
     <Compile Include="Common\ServiceConfig.cs" />
     <Compile Include="Common\SpecFile.cs" />
+    <Compile Include="Common\TraceabilityConfig.cs" />
     <Compile Include="Isis\BillDetail.cs" />
     <Compile Include="Isis\BillHeader.cs" />
     <Compile Include="Isis\CreditNoteDetail.cs" />

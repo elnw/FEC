@@ -68,15 +68,16 @@ namespace TM.FECentralizada.Cms.Read
                     List<Parameters> ParametersDebitNote = ParamsResponse.FindAll(x => x.KeyDomain.ToUpper().Equals(Tools.Constants.CmsRead_DebitNote.ToUpper())).ToList();
 
                     Tools.Logging.Info("Inicio : Procesar documentos de FTP Cms");
-                    Invoice(ParametersInvoce);
-                    Bill(ParametersBill);
-                    CreditNote(ParametersCreditNote);
-                    DebitNote(ParametersDebitNote);
-                    /*Parallel.Invoke(
+                    //Invoice(ParametersInvoce);
+                    //Bill(ParametersBill);
+                    //CreditNote(ParametersCreditNote);
+                    //DebitNote(ParametersDebitNote);
+                    Parallel.Invoke(
                                () => Invoice(ParametersInvoce),
+                               () => Bill(ParametersBill),
                                () => CreditNote(ParametersCreditNote),
                                () => DebitNote(ParametersDebitNote)
-                        );*/
+                        );
                     Tools.Logging.Info("Fin : Procesar documentos de FTP Cms");
 
                     //Obtengo la Configuración Intervalo de Tiempo
@@ -510,7 +511,7 @@ namespace TM.FECentralizada.Cms.Read
 
                 if (inputFilesFTP.Count > 0)
                 {
-                    inputFilesFTP = inputFilesFTP.Where(x => x.StartsWith("NDEB_")).ToList();
+                    inputFilesFTP = inputFilesFTP.Where(x => x.StartsWith("NCRE_")).ToList();
                     if (inputFilesFTP.Count > 0)
                     {
                         Tools.Logging.Info("Inicio: Obtener norma para las notas de credito de Cms");
@@ -592,8 +593,8 @@ namespace TM.FECentralizada.Cms.Read
                                     Business.Common.UpdateAudit(auditId, Tools.Constants.LEIDO, intentos);
 
                                     Tools.Logging.Info("Inicio : Insertar Documentos Validados ");
-                                    Business.Common.BulkInsertListToTable(ListInvoceDetail, "Notacredito_Detalle");
-                                    Business.Common.BulkInsertListToTable(ListInvoceHeader, "Notacredito_Cabecera");
+                                    Business.Common.BulkInsertListToTable(ListInvoceDetail, "Nota_Credito_Detalle");
+                                    Business.Common.BulkInsertListToTable(ListInvoceHeader, "Nota_Credito_Cabecera");
 
                                     Tools.Logging.Info("Inicio : enviar GFiscal ");
 
@@ -784,8 +785,8 @@ namespace TM.FECentralizada.Cms.Read
                                     Business.Common.UpdateAudit(auditId, Tools.Constants.LEIDO, intentos);
 
                                     Tools.Logging.Info("Inicio : Insertar Documentos Validados ");
-                                    Business.Common.BulkInsertListToTable(ListInvoceDetail, "NotaDebito_Detalle");
-                                    Business.Common.BulkInsertListToTable(ListInvoceHeader, "NotaDebito_Cabecera");
+                                    Business.Common.BulkInsertListToTable(ListInvoceDetail, "Nota_Debito_Detalle");
+                                    Business.Common.BulkInsertListToTable(ListInvoceHeader, "Nota_Debito_Cabecera");
 
                                     Tools.Logging.Info("Inicio : enviar GFiscal ");
 
