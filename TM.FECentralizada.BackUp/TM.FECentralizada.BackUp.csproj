@@ -44,17 +44,35 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Service1.cs">
+    <Compile Include="BackupService.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Service1.Designer.cs">
-      <DependentUpon>Service1.cs</DependentUpon>
+    <Compile Include="BackupService.Designer.cs">
+      <DependentUpon>BackupService.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TM.FECentralizada.Business\TM.FECentralizada.Business.csproj">
+      <Project>{7c1cf969-0977-4865-b411-d0f1021734cd}</Project>
+      <Name>TM.FECentralizada.Business</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TM.FECentralizada.Data\TM.FECentralizada.Data.csproj">
+      <Project>{826923d1-dba8-497a-b672-ecb01b196529}</Project>
+      <Name>TM.FECentralizada.Data</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TM.FECentralizada.Entities\TM.FECentralizada.Entities.csproj">
+      <Project>{2073c640-5cbf-4409-a9f0-6ff059df79fb}</Project>
+      <Name>TM.FECentralizada.Entities</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TM.FECentralizada.Tools\TM.FECentralizada.Tools.csproj">
+      <Project>{c043bc32-6f5b-4642-8d4f-1c37f323a1c9}</Project>
+      <Name>TM.FECentralizada.Tools</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

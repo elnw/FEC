@@ -271,6 +271,11 @@
         public const string Backup = "Backup";
         #endregion
 
+        #region backup
+        public const string BackUp = "backup";
+        public const string BackUp_Config = "config";
+        #endregion
+
         #region Parameters
         public const string KEY_CONFIG = "config";
         public const string MAIL_CONFIG = "mail";
