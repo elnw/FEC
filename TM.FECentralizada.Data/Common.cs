@@ -164,9 +164,9 @@ namespace TM.FECentralizada.Data
                         int i = 0;
                         foreach (var property in typeof(T).GetMembers().Where(x => x.MemberType == System.Reflection.MemberTypes.Property).ToList())
                         {
-                            if (i == 14) break;
+                           
                             objbulk.ColumnMappings.Add(property.Name, property.Name);
-                             i++;
+                          
                             
                         }
 
