@@ -14,12 +14,18 @@ namespace TM.FECentralizada.Sap.Response
         /// </summary>
         static void Main()
         {
+            #if DEBUG
+                        SapResponse sapResponse = new SapResponse();
+                        sapResponse.Test();
+            #else
             ServiceBase[] ServicesToRun;
-            ServicesToRun = new ServiceBase[]
-            {
-                new SapResponse()
-            };
-            ServiceBase.Run(ServicesToRun);
+                        ServicesToRun = new ServiceBase[]
+                        {
+                            new SapResponse()
+                        };
+                        ServiceBase.Run(ServicesToRun);
+            #endif
+            
         }
     }
 }

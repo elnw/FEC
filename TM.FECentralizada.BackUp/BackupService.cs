@@ -50,16 +50,18 @@ namespace TM.FECentralizada.BackUp
 
             if (ParamsResponse != null && ParamsResponse.Any())
             {
-                List<Parameters> ParametersInvoce = ParamsResponse.FindAll(x => x.KeyDomain.ToUpper().Equals(Tools.Constants.BackUp_Config.ToUpper())).ToList();
+                List<Parameters> Parameters = ParamsResponse.FindAll(x => x.KeyDomain.ToUpper().Equals(Tools.Constants.BackUp_Config.ToUpper())).ToList();
 
                 Tools.Logging.Info("Inicio : Procesar documentos de BD Pacyfic");
 
+
+
             }
 
-               
+        }
 
-
-
+        private void Invoice(List<Parameters> Parameters)
+        {
 
         }
 

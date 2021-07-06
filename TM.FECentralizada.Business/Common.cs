@@ -127,6 +127,7 @@ namespace TM.FECentralizada.Business
             List<ResponseFile> responseFiles = null;
             try
             {
+                if (!fileServer.Directory.EndsWith("/")) fileServer.Directory += "/";
                 gfiscalFiles = Tools.FileServer.ListDirectory(fileServer.Host, fileServer.Port, fileServer.User, fileServer.Password, fileServer.Directory);
 
                 if (gfiscalFiles != null)

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TM.FECentralizada.Entities.Common;
 using TM.FECentralizada.Entities.Sap;
 
 namespace TM.FECentralizada.Business
@@ -154,6 +155,28 @@ namespace TM.FECentralizada.Business
                 isValid &= false;
             }
             return !isValid;
+        }
+
+        public static List<string> CreateLegacyResponseFile(List<ResponseFile> files)
+        {
+            List<string> lines = new List<string>();
+            try
+            {
+                foreach(var item in files)
+                {
+                    lines.Add($"{item.estado}|{item.numDocEmisor}|{item.tipoDocumento}|{item.serieNumero}|{item.codigoSunat}|" +
+                        $"{item.mensajeSunat}||{item.fechaDeclaracion}|{item.fechaEmision}|{item.firma}|{item.resumen}|" +
+                        $"{item.codSistema}|{item.adicional1}|{item.adicional2}|{item.adicional3}|{item.adicional4}|" +
+                        $"{item.adicional5}|{item.numDocEmisor.Substring(0,11)}|");
+                }
+
+               
+
+            }catch(Exception ex)
+            {
+                Tools.Logging.Error(ex.Message);
+            }
+            return lines;
         }
 
         public static List<BillHeader> GetBillHeader(string filename, List<string> data, DateTime timestamp, ref int intentos, int maxAttemps)

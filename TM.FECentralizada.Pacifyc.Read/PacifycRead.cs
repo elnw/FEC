@@ -111,8 +111,6 @@ namespace TM.FECentralizada.Pacifyc.Read
             int intentos = 0;
             DateTime timestamp = DateTime.Now;
 
-
-
             Tools.Logging.Info("Inicio: Obtener norma para las facturas de Pacyfic");
 
             Parameters configParameter = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.KEY_CONFIG);
