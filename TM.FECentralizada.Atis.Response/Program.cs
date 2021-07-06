@@ -25,7 +25,7 @@ namespace TM.FECentralizada.Atis.Response
              ServiceBase[] ServicesToRun;
              ServicesToRun = new ServiceBase[]
              {
-                 new PacifycResponse()
+                 new AtisResponse()
              };
              ServiceBase.Run(ServicesToRun);
 #endif

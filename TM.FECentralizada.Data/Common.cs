@@ -188,7 +188,7 @@ namespace TM.FECentralizada.Data
             {
                 using (SqlConnection connection = (SqlConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.SQL))
                 {
-                    using(SqlCommand cmd = new SqlCommand("update factura_cabecera set nombreArchivoAlignet = @p1, fechaEnvio = @p2 where serieNumero in (@p3);", connection))
+                    using(SqlCommand cmd = new SqlCommand("update FE_Factura_Cabecera set nombreArchivoAlignet = @p1, fechaEnvio = @p2 where serieNumero in (@p3);", connection))
                     {
                         connection.Open();
                         cmd.CommandType = CommandType.Text;
@@ -213,7 +213,7 @@ namespace TM.FECentralizada.Data
             {
                 using (SqlConnection connection = (SqlConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.SQL))
                 {
-                    using (SqlCommand cmd = new SqlCommand("update Nota_Credito_Cabecera set nombreArchivoAlignet = @p1, fechaEnvio = @p2 where serieNumero in (@p3);", connection))
+                    using (SqlCommand cmd = new SqlCommand("update FE_Nota_Credito_Cabecera set nombreArchivoAlignet = @p1, fechaEnvio = @p2 where serieNumero in (@p3);", connection))
                     {
                         connection.Open();
                         cmd.CommandType = CommandType.Text;
@@ -239,7 +239,7 @@ namespace TM.FECentralizada.Data
             {
                 using (SqlConnection connection = (SqlConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.SQL))
                 {
-                    using (SqlCommand cmd = new SqlCommand("update Nota_Debito_Cabecera set nombreArchivoAlignet = @p1, fechaEnvio = @p2 where serieNumero in (@p3);", connection))
+                    using (SqlCommand cmd = new SqlCommand("update FE_Nota_Debito_Cabecera set nombreArchivoAlignet = @p1, fechaEnvio = @p2 where serieNumero in (@p3);", connection))
                     {
                         connection.Open();
                         cmd.CommandType = CommandType.Text;

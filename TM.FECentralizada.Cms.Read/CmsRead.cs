@@ -208,8 +208,8 @@ namespace TM.FECentralizada.Cms.Read
                                     Business.Common.UpdateAudit(auditId, Tools.Constants.LEIDO, intentos);
 
                                     Tools.Logging.Info("Inicio : Insertar Documentos Validados ");
-                                    Business.Common.BulkInsertListToTable(ListInvoceDetail, "Factura_Detalle");
-                                    Business.Common.BulkInsertListToTable(ListInvoceHeader, "Factura_Cabecera");
+                                    Business.Common.BulkInsertListToTable(ListInvoceDetail, "FE_Factura_Detalle");
+                                    Business.Common.BulkInsertListToTable(ListInvoceHeader, "FE_Factura_Cabecera");
 
                                     Tools.Logging.Info("Inicio : enviar GFiscal ");
 
@@ -400,8 +400,8 @@ namespace TM.FECentralizada.Cms.Read
                                     Business.Common.UpdateAudit(auditId, Tools.Constants.LEIDO, intentos);
 
                                     Tools.Logging.Info("Inicio : Insertar Documentos Validados ");
-                                    Business.Common.BulkInsertListToTable(ListBillDetail, "Boleta_Detalle");
-                                    Business.Common.BulkInsertListToTable(ListBillHeader, "Boleta_Cabecera");
+                                    Business.Common.BulkInsertListToTable(ListBillDetail, "FE_Boleta_Detalle");
+                                    Business.Common.BulkInsertListToTable(ListBillHeader, "FE_Boleta_Cabecera");
 
                                     Tools.Logging.Info("Inicio : enviar GFiscal ");
 
@@ -593,8 +593,8 @@ namespace TM.FECentralizada.Cms.Read
                                     Business.Common.UpdateAudit(auditId, Tools.Constants.LEIDO, intentos);
 
                                     Tools.Logging.Info("Inicio : Insertar Documentos Validados ");
-                                    Business.Common.BulkInsertListToTable(ListInvoceDetail, "Nota_Credito_Detalle");
-                                    Business.Common.BulkInsertListToTable(ListInvoceHeader, "Nota_Credito_Cabecera");
+                                    Business.Common.BulkInsertListToTable(ListInvoceDetail, "FE_Nota_Credito_Detalle");
+                                    Business.Common.BulkInsertListToTable(ListInvoceHeader, "FE_Nota_Credito_Cabecera");
 
                                     Tools.Logging.Info("Inicio : enviar GFiscal ");
 
@@ -785,8 +785,8 @@ namespace TM.FECentralizada.Cms.Read
                                     Business.Common.UpdateAudit(auditId, Tools.Constants.LEIDO, intentos);
 
                                     Tools.Logging.Info("Inicio : Insertar Documentos Validados ");
-                                    Business.Common.BulkInsertListToTable(ListInvoceDetail, "Nota_Debito_Detalle");
-                                    Business.Common.BulkInsertListToTable(ListInvoceHeader, "Nota_Debito_Cabecera");
+                                    Business.Common.BulkInsertListToTable(ListInvoceDetail, "FE_Nota_Debito_Detalle");
+                                    Business.Common.BulkInsertListToTable(ListInvoceHeader, "FE_Nota_Debito_Cabecera");
 
                                     Tools.Logging.Info("Inicio : enviar GFiscal ");
 

@@ -25,7 +25,7 @@ namespace TM.FECentralizada.Traceability
              ServiceBase[] ServicesToRun;
              ServicesToRun = new ServiceBase[]
              {
-                 new CmsResponse()
+                 new TraceabilityService()
              };
              ServiceBase.Run(ServicesToRun);
 #endif

@@ -202,8 +202,8 @@ namespace TM.FECentralizada.Atis.Read
                                     Business.Common.UpdateAudit(auditId, Tools.Constants.LEIDO, intentos);
 
                                     Tools.Logging.Info("Inicio : Insertar Documentos Validados ");
-                                    Business.Common.BulkInsertListToTable(ListInvoceDetail, "Factura_Detalle");
-                                    Business.Common.BulkInsertListToTable(ListInvoceHeader, "Factura_Cabecera");
+                                    Business.Common.BulkInsertListToTable(ListInvoceDetail, "FE_Factura_Detalle");
+                                    Business.Common.BulkInsertListToTable(ListInvoceHeader, "FE_Factura_Cabecera");
 
                                     Tools.Logging.Info("Inicio : enviar GFiscal ");
 
@@ -390,8 +390,8 @@ namespace TM.FECentralizada.Atis.Read
                                     Business.Common.UpdateAudit(auditId, Tools.Constants.LEIDO, intentos);
 
                                     Tools.Logging.Info("Inicio : Insertar Documentos Validados ");
-                                    Business.Common.BulkInsertListToTable(ListInvoceDetail, "Boleta_Detalle");
-                                    Business.Common.BulkInsertListToTable(ListInvoceHeader, "Boleta_Cabecera");
+                                    Business.Common.BulkInsertListToTable(ListInvoceDetail, "FE_Boleta_Detalle");
+                                    Business.Common.BulkInsertListToTable(ListInvoceHeader, "FE_Boleta_Cabecera");
 
                                     Tools.Logging.Info("Inicio : enviar GFiscal ");
 
@@ -575,8 +575,8 @@ namespace TM.FECentralizada.Atis.Read
                                     Business.Common.UpdateAudit(auditId, Tools.Constants.LEIDO, intentos);
 
                                     Tools.Logging.Info("Inicio : Insertar Documentos Validados ");
-                                    Business.Common.BulkInsertListToTable(ListCreditNoteDetail, "Nota_Credito_Detalle");
-                                    Business.Common.BulkInsertListToTable(ListCreditNoteHeader, "Nota_Credito_Cabecera");
+                                    Business.Common.BulkInsertListToTable(ListCreditNoteDetail, "FE_Nota_Credito_Detalle");
+                                    Business.Common.BulkInsertListToTable(ListCreditNoteHeader, "FE_Nota_Credito_Cabecera");
 
                                     Tools.Logging.Info("Inicio : enviar GFiscal ");
 
@@ -756,8 +756,8 @@ namespace TM.FECentralizada.Atis.Read
                                     Business.Common.UpdateAudit(auditId, Tools.Constants.LEIDO, intentos);
 
                                     Tools.Logging.Info("Inicio : Insertar Documentos Validados ");
-                                    Business.Common.BulkInsertListToTable(ListDebitNoteDetail, "Nota_Debito_Detalle");
-                                    Business.Common.BulkInsertListToTable(ListDebitNoteHeader, "Nota_Debito_Cabecera");
+                                    Business.Common.BulkInsertListToTable(ListDebitNoteDetail, "FE_Nota_Debito_Detalle");
+                                    Business.Common.BulkInsertListToTable(ListDebitNoteHeader, "FE_Nota_Debito_Cabecera");
 
                                     Tools.Logging.Info("Inicio : enviar GFiscal ");
 
