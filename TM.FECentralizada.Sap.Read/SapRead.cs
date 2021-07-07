@@ -66,14 +66,14 @@ namespace TM.FECentralizada.Sap.Read
 
                     //Invoice(ParametersInvoce);
                     //Bill(ParametersBill);
-                    DebitNote(ParametersDebitNote);
+                    //DebitNote(ParametersDebitNote);
                     Tools.Logging.Info("Inicio : Procesar documentos de Archivos Sap");
-                    //Parallel.Invoke(
-                    //           () => Invoice(ParametersInvoce),
-                    //           () => Bill(ParametersBill)
-                    //           //() => CreditNote(ParametersCreditNote),
-                    //           //() => DebitNote(ParametersDebitNote)
-                    //    );
+                    Parallel.Invoke(
+                               () => Invoice(ParametersInvoce),
+                               () => Bill(ParametersBill),
+                              () => CreditNote(ParametersCreditNote),
+                               () => DebitNote(ParametersDebitNote)
+                        );
                     Tools.Logging.Info("Fin : Procesar documentos de Archivos Sap");
 
                     //Obtengo la Configuración Intervalo de Tiempo -ARREGLAR ESTO
