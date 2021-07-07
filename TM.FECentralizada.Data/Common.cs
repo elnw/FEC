@@ -161,7 +161,7 @@ namespace TM.FECentralizada.Data
                         //assign Destination table name  
                         objbulk.DestinationTableName = tableName;
 
-                        int i = 0;
+                        //int i = 0;
                         foreach (var property in typeof(T).GetMembers().Where(x => x.MemberType == System.Reflection.MemberTypes.Property).ToList())
                         {
                            

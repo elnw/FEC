@@ -8,6 +8,7 @@ using System.ServiceProcess;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
+using TM.FECentralizada.Entities.Backup;
 using TM.FECentralizada.Entities.Common;
 
 namespace TM.FECentralizada.BackUp
@@ -18,6 +19,11 @@ namespace TM.FECentralizada.BackUp
         public BackupService()
         {
             InitializeComponent();
+        }
+
+        public void Test()
+        {
+            Procedure();
         }
 
         protected override void OnStart(string[] args)
@@ -45,22 +51,29 @@ namespace TM.FECentralizada.BackUp
         {
             Tools.Logging.Info("Inicio del Proceso: Backup");
 
+            Tools.Logging.Info("Inicio: Obtener Parámetros");
             List<Parameters> ParamsResponse = TM.FECentralizada.Business.Common.GetParametersByKey(new Parameters() { Domain = Tools.Constants.BackUp, KeyDomain = "", KeyParam = "" });
-            Tools.Logging.Info("Fin : Obtener Parámetros");
+            
 
             if (ParamsResponse != null && ParamsResponse.Any())
             {
-                List<Parameters> ParametersInvoce = ParamsResponse.FindAll(x => x.KeyDomain.ToUpper().Equals(Tools.Constants.BackUp_Config.ToUpper())).ToList();
+                List<Parameters> Parameters = ParamsResponse.FindAll(x => x.KeyDomain.ToUpper().Equals(Tools.Constants.BackUp_Config.ToUpper())).ToList();
 
-                Tools.Logging.Info("Inicio : Procesar documentos de BD Pacyfic");
+                Parameters pmtBackupConfig = Parameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.Backup_config);
+                BackupConfig backupService = Business.Common.GetParameterDeserialized<BackupConfig>(pmtBackupConfig);
+
+                Tools.Logging.Info("Fin : Obtener Parámetros");
+
+                Tools.Logging.Info("Inicio : Generar backup - Backup");
+                Business.BackUp.MakeBackup(backupService);
+                Tools.Logging.Info("Fin : Generar backup - Backup");
 
             }
-
-               
-
-
-
-
+            else
+            {
+                Tools.Logging.Error("No se configuraron los parámetros para el proceso de Backup");
+            }
+            Tools.Logging.Info("Fin del Proceso: Backup");
         }
 
         protected override void OnStop()

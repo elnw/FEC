@@ -49,6 +49,7 @@
     <Compile Include="Atis\DebitNoteHeader.cs" />
     <Compile Include="Atis\InvoceDetail.cs" />
     <Compile Include="Atis\InvoiceHeader.cs" />
+    <Compile Include="Backup\BackupConfig.cs" />
     <Compile Include="Cms\BillDetail.cs" />
     <Compile Include="Cms\BillHeader.cs" />
     <Compile Include="Cms\CreditNoteDetail.cs" />

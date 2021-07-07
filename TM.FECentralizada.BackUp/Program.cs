@@ -14,12 +14,17 @@ namespace TM.FECentralizada.BackUp
         /// </summary>
         static void Main()
         {
+#if DEBUG
+            BackupService backup = new BackupService();
+            backup.Test();
+#else
             ServiceBase[] ServicesToRun;
             ServicesToRun = new ServiceBase[]
             {
                 new BackupService()
             };
             ServiceBase.Run(ServicesToRun);
+#endif
         }
     }
 }

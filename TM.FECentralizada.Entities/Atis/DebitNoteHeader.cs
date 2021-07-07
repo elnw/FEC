@@ -23,10 +23,8 @@ namespace TM.FECentralizada.Entities.Atis
         public string numeroDocumentoReferencia_2 { get; set; }
         public string totalVVNetoOpNoGravada { get; set; }
         public string conceptoVVNetoOpNoGravada { get; set; }
-        public string conceptovvnetoopnogravada { get; set; }
         public string totalVVNetoOpExoneradas { get; set; }
         public string conceptoVVNetoOpExoneradas { get; set; }
-        public string conceptovvnetoopexoneradas { get; set; }
         public string totalVVNetoOpGratuitas { get; set; }
         public string conceptoVVNetoOpGratuitas { get; set; }
         public string totalVVNetoExportacion { get; set; }
@@ -61,6 +59,5 @@ namespace TM.FECentralizada.Entities.Atis
         public string estado { get; set; }
 
         public string fechaRegistro { get; set; }
-        public string totalVVNetoOpGravadas { get; set; }
     }
 }

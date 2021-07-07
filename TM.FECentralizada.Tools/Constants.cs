@@ -105,6 +105,14 @@
         public const string SapRead_DebitNote = "DebitNote";
         #endregion
 
+        #region SapRespuesta
+        public const string SapResponse = "Sap_Respuesta";
+        public const string SapResponse_Invoice = "Factura";
+        public const string SapResponse_Bill = "Boleta";
+        public const string SapResponse_CreditNote = "NotaCredito";
+        public const string SapResponse_DebitNote = "NotaDebito";
+        #endregion
+
         #region IsisLectura
         public const string IsisRead = "Isis_Lectura";
         public const string IsisRead_Bill = "Boleta";
@@ -218,6 +226,10 @@
         public const string PacyficResponse_CreditNote = "NotaCredito";
         public const string PacyficResponse_DebitNote = "NotaDebito";
 
+        #endregion
+
+        #region Backup
+        public const string Backup_config = "config";
         #endregion
 
         #region States
