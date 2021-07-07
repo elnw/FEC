@@ -225,6 +225,10 @@
 
         #endregion
 
+        #region Backup
+        public const string Backup_config = "config";
+        #endregion
+
         #region States
         public const int NO_LEIDO = 0;
         public const int LEIDO = 1;
