@@ -19,30 +19,18 @@ namespace Prueba
             {
                 DbConnection.Open();
                 OdbcCommand DbCommand = DbConnection.CreateCommand();
-                DbCommand.CommandText = @"Select * FROM fact_fe01_cab WHERE(FECHARECOJO IS NULL) OR(TRIM(FECHARECOJO) IS NULL); ";
+                DbCommand.CommandText = @"Select serienumero FROM fact_fe01_cab WHERE(FECHARECOJO IS NULL) OR(TRIM(FECHARECOJO) IS NULL); ";
                 TM.FECentralizada.Tools.Logging.Info("Select");
                 OdbcDataReader DbReader = DbCommand.ExecuteReader();
                 TM.FECentralizada.Tools.Logging.Info("dbcDataReader DbReader = DbCommand.ExecuteReader();");
-                int fCount = DbReader.FieldCount;
-                TM.FECentralizada.Tools.Logging.Info("primer for------------------------------------------------------------------");
-                for (int i = 0; i < fCount; i++)
-                {
-                    String fName = DbReader.GetName(i);
-                    TM.FECentralizada.Tools.Logging.Info(fName + ":");
-                }
-                Console.WriteLine();
-                TM.FECentralizada.Tools.Logging.Info("segundo for----------------------------------------------------------------------");
+            int asd = 0;
                 while (DbReader.Read())
                 {
-                    Console.Write(":");
-                    for (int i = 0; i < fCount; i++)
-                    {
-                        String col = String.IsNullOrEmpty(DbReader.GetString(i))?"": DbReader.GetString(i);
-                        TM.FECentralizada.Tools.Logging.Info(col + ":");
-                    }
-                    Console.WriteLine();
+                    asd++;
+                    TM.FECentralizada.Tools.Logging.Info(DbReader["serienumero"].ToString());
+                                        
                 }
-
+                TM.FECentralizada.Tools.Logging.Info("Cantidad de Facturas encontrados en Isis: " + asd);
                 DbReader.Close();
                 DbCommand.Dispose();
                 DbConnection.Close();

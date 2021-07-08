@@ -109,8 +109,7 @@ namespace TM.FECentralizada.Isis.Read
             List<string> validationMessage = new List<string>();
             int auditId;
             int intentos = 0;
-            DateTime timestamp = DateTime.Now;
-
+            DateTime timestamp = DateTime.Now;          
 
 
             Tools.Logging.Info("Inicio: Obtener norma para las facturas de Isis");
@@ -125,112 +124,120 @@ namespace TM.FECentralizada.Isis.Read
                 List<InvoiceHeader> ListInvoceHeader = Business.Isis.GetInvoceHeader(timestamp, ref intentos, serviceConfig.maxAttemps);
                 List<InvoiceDetail> ListInvoceDetail = Business.Isis.GetInvoceDetail(timestamp);
 
-
-                Tools.Logging.Info("Inicio: Obtener configuración de correos electronicos - Facturas Isis");
-
-                Parameters mailParameter = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.MAIL_CONFIG);
-
-                if (mailParameter != null)
+                if (ListInvoceHeader.Count != 0)
                 {
+                    Tools.Logging.Info("Inicio: Obtener configuración de correos electronicos - Facturas Isis");
 
+                    Parameters mailParameter = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.MAIL_CONFIG);
 
-                    Tools.Logging.Info("Inicio : Registrar Auditoria");
-
-                    auditId = TM.FECentralizada.Business.Common.InsertAudit(DateTime.Now.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT), 2, Tools.Constants.NO_LEIDO, ListInvoceHeader.Count * ListInvoceDetail.Count, 1, serviceConfig.Norm);
-
-                    if (auditId > 0)
+                    if (mailParameter != null)
                     {
 
-                        Tools.Logging.Info("Inicio : Validar Documentos ");
 
-                        isValid = Business.Isis.ValidateInvoices(ListInvoceHeader, validationMessage);
-                        isValid &= Business.Isis.ValidateInvoiceDetail(ListInvoceDetail, validationMessage);
+                        Tools.Logging.Info("Inicio : Registrar Auditoria");
 
-                        ListInvoceDetail.RemoveAll(x => !ListInvoceHeader.Select(y => y.serieNumero).Contains(x.serieNumero));
+                        auditId = TM.FECentralizada.Business.Common.InsertAudit(DateTime.Now.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT), 6, Tools.Constants.NO_LEIDO, ListInvoceHeader.Count * ListInvoceDetail.Count, 1, serviceConfig.Norm);
 
-
-                        Tools.Logging.Info("Inicio : Notificación de Validación");
-
-                        if (!isValid)
+                        if (auditId > 0)
                         {
-                            if (mailParameter != null)
+
+                            Tools.Logging.Info("Inicio : Validar Documentos ");
+
+                            isValid = Business.Isis.ValidateInvoices(ListInvoceHeader, validationMessage);
+                            isValid &= Business.Isis.ValidateInvoiceDetail(ListInvoceDetail, validationMessage);
+                            Tools.Logging.Info("Facturas Cabecera validas: "+ ListInvoceHeader.Count);
+                            Tools.Logging.Info("Facturas Detalles validas: " + ListInvoceDetail.Count);
+                            Tools.Logging.Info("Fin : Validar Documentos ");
+
+                            ListInvoceDetail.RemoveAll(x => !ListInvoceHeader.Select(y => y.serieNumero).Contains(x.serieNumero));
+
+
+                            Tools.Logging.Info("Inicio : Notificación de Validación");
+
+                            if (!isValid)
                             {
-                                mailConfig = Business.Common.GetParameterDeserialized<Mail>(mailParameter);
-                                Business.Common.SendFileNotification(mailConfig, validationMessage);
-                                //Business.Common.UpdateAudit(auditId, Tools.Constants.FALLA_VALIDACION, intentos);
+                                if (mailParameter != null)
+                                {
+                                    mailConfig = Business.Common.GetParameterDeserialized<Mail>(mailParameter);
+                                    Business.Common.SendFileNotification(mailConfig, validationMessage);
+                                    //Business.Common.UpdateAudit(auditId, Tools.Constants.FALLA_VALIDACION, intentos);
+                                }
                             }
+
+                            Tools.Logging.Info("Inicio : Actualizo Auditoria");
+                            Business.Common.UpdateAudit(auditId, Tools.Constants.LEIDO, intentos);
+
+                            if (ListInvoceHeader.Count() > 0)
+                            {
+                                Tools.Logging.Info("Inicio : Insertar Documentos Validados ");
+                                Business.Common.BulkInsertListToTable(ListInvoceDetail, "FE_Factura_Detalle");
+                                Business.Common.BulkInsertListToTable(ListInvoceHeader, "FE_Factura_Cabecera");
+                            }
+
+                            Tools.Logging.Info("Inicio : enviar GFiscal ");
+
+                            Parameters fileParameter = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.FTP_CONFIG);
+                            fileServerConfig = Business.Common.GetParameterDeserialized<FileServer>(fileParameter);
+
+                            if (fileServerConfig != null && ListInvoceHeader.Count() > 0)
+                            {
+                                string resultPath = "";
+                                if (serviceConfig.Norm == 340)
+                                {
+                                    resultPath = Business.Isis.CreateInvoiceFile340(ListInvoceHeader, ListInvoceDetail, System.IO.Path.GetTempPath());
+
+                                }
+                                else
+                                {
+                                    resultPath = Business.Isis.CreateInvoiceFile193(ListInvoceHeader, ListInvoceDetail, System.IO.Path.GetTempPath());
+                                }
+                                Tools.FileServer.UploadFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory, System.IO.Path.GetFileName(resultPath), System.IO.File.ReadAllBytes(resultPath));
+
+                                if (mailParameter != null)
+                                {
+                                    mailConfig = Business.Common.GetParameterDeserialized<Mail>(mailParameter);
+                                    Tools.Logging.Info("Inicio :  Notificación de envio  GFiscal ");
+                                    Business.Common.SendFileNotification(mailConfig, $"Se envió correctamente el documento: {System.IO.Path.GetFileName(resultPath)} a gfiscal");
+                                    Tools.Logging.Info("Inicio : Actualizo Auditoria");
+                                }
+
+                                Business.Common.UpdateAudit(auditId, Tools.Constants.ENVIADO_GFISCAL, intentos);
+                                Tools.Logging.Info("Inicio : Actualizar fecha de envio");
+                                //actualizar documento factura -> agregar el nombre archivo alignet,fechaenvio,
+
+                                /*Business.Common.UpdateDocumentDebitNote(System.IO.Path.GetFileName(resultPath), DateTime.Now.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT));
+                                Business.Isis.UpdatePickUpDate(ListInvoceHeader);*/
+
+                                /*
+                                Business.Common.UpdateDocumentInvoice(System.IO.Path.GetFileName(resultPath), DateTime.Now.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT), "'"+String.Join("','", ListInvoceHeader.Select(x=>x.serieNumero))+ "'");
+                                Business.Isis.UpdateInvoicePickUpDate(ListInvoceHeader);
+                                */
+
+                            }
+
+
+
+
+
                         }
-
-                        Tools.Logging.Info("Inicio : Actualizo Auditoria");
-                        Business.Common.UpdateAudit(auditId, Tools.Constants.LEIDO, intentos);
-
-                        if (ListInvoceHeader.Count() > 0)
+                        else
                         {
-                            Tools.Logging.Info("Inicio : Insertar Documentos Validados ");
-                            Business.Common.BulkInsertListToTable(ListInvoceDetail, "FE_Factura_Detalle");
-                            Business.Common.BulkInsertListToTable(ListInvoceHeader, "FE_Factura_Cabecera");
+                            Tools.Logging.Error($"No se pudo recuperar el id de auditoria - Facturas Isis");
+                            Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
                         }
-
-                        Tools.Logging.Info("Inicio : enviar GFiscal ");
-
-                        Parameters fileParameter = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.FTP_CONFIG);
-                        fileServerConfig = Business.Common.GetParameterDeserialized<FileServer>(fileParameter);
-
-                        if (fileServerConfig != null && ListInvoceHeader.Count() > 0)
-                        {
-                            string resultPath = "";
-                            if (serviceConfig.Norm == 340)
-                            {
-                                resultPath = Business.Isis.CreateInvoiceFile340(ListInvoceHeader, ListInvoceDetail, System.IO.Path.GetTempPath());
-
-                            }
-                            else
-                            {
-                                resultPath = Business.Isis.CreateInvoiceFile193(ListInvoceHeader, ListInvoceDetail, System.IO.Path.GetTempPath());
-                            }
-                            Tools.FileServer.UploadFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory, System.IO.Path.GetFileName(resultPath), System.IO.File.ReadAllBytes(resultPath));
-
-                            if (mailParameter != null)
-                            {
-                                mailConfig = Business.Common.GetParameterDeserialized<Mail>(mailParameter);
-                                Tools.Logging.Info("Inicio :  Notificación de envio  GFiscal ");
-                                Business.Common.SendFileNotification(mailConfig, $"Se envió correctamente el documento: {System.IO.Path.GetFileName(resultPath)} a gfiscal");
-                                Tools.Logging.Info("Inicio : Actualizo Auditoria");
-                            }
-
-                            Business.Common.UpdateAudit(auditId, Tools.Constants.ENVIADO_GFISCAL, intentos);
-                            Tools.Logging.Info("Inicio : Actualizar fecha de envio");
-                            //actualizar documento factura -> agregar el nombre archivo alignet,fechaenvio,
-
-                            /*Business.Common.UpdateDocumentDebitNote(System.IO.Path.GetFileName(resultPath), DateTime.Now.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT));
-                            Business.Isis.UpdatePickUpDate(ListInvoceHeader);*/
-
-                            Business.Common.UpdateDocumentInvoice(System.IO.Path.GetFileName(resultPath), DateTime.Now.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT), "'"+String.Join("','", ListInvoceHeader.Select(x=>x.serieNumero))+ "'");
-                            Business.Isis.UpdateInvoicePickUpDate(ListInvoceHeader);
-
-
-                        }
-
-
-
 
 
                     }
                     else
                     {
-                        Tools.Logging.Error($"No se pudo recuperar el id de auditoria - Facturas Isis");
-                        Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
+                        Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.MAIL_CONFIG}");
+                        //Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
+                        return;
                     }
-
-
                 }
-                else
-                {
-                    Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.MAIL_CONFIG}");
-                    //Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
-                    return;
+                else {
+                    Tools.Logging.Error($"No se encontraron Facturas para procesar");
                 }
-
 
             }
             else
