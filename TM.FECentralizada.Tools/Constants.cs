@@ -121,7 +121,7 @@
         public const string IsisRead_DebitNote = "DebitNote";
         public const string IsisRead_FileServer_GFiscal = "FileServer_Gfiscal";
 
-        public const string IsisRead_Select_Header = @"Select
+        public const string IsisRead_Select_Header = @"Select 
                                                             serieNumero,
                                                             fechaEmision,
                                                             horadeEmision,

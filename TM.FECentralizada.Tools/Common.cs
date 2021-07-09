@@ -66,6 +66,21 @@ namespace TM.FECentralizada.Tools
             }
             return bytesContent;
         }
+        public static String GetSerialized<T>(T value)
+        {
+            try
+            {
+                return Newtonsoft.Json.JsonConvert.SerializeObject(value);
+            }
+            catch (Exception ex)
+            {
+                Tools.Logging.Error(ex.Message + ex.InnerException);
+                throw ex;
+            }
+
+        }
+
+
 
         public static List<string> ReadLineFromPackage(ExcelPackage Package, int LengthColumn)
         {

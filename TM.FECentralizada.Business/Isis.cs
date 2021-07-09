@@ -41,11 +41,11 @@ namespace TM.FECentralizada.Business
             List<InvoiceDetail> ListDetails = new List<InvoiceDetail>();
             InvoiceDetail objBillHeader = new InvoiceDetail();
 
-            Tools.Logging.Info("Iniciando Consulta BD- Cabecera");
+            Tools.Logging.Info("Iniciando Consulta BD- Factura Detalle");
             try
             {
                 ListDetails = Data.Isis.ReadInvoiceDetail(timestamp);
-                Tools.Logging.Info("Fin Consulta BD- Cabecera");
+                Tools.Logging.Info("Fin Consulta BD- Factura Detalle");
             }
 
             catch (Exception ex)
@@ -200,6 +200,7 @@ namespace TM.FECentralizada.Business
 
         public static bool ValidateInvoices(List<InvoiceHeader> invoiceHeaders, List<string> messageResult)
         {
+            Tools.Logging.Info("Inicio: Validando Facturas - Cabecera");
             bool checkInvoice = true;
 
             foreach (var invoice in invoiceHeaders.ToList())
@@ -211,7 +212,7 @@ namespace TM.FECentralizada.Business
                 }
 
             }
-
+            Tools.Logging.Info("Fin: Validando Facturas - Cabecera");
             return checkInvoice;
         }
 
@@ -401,6 +402,7 @@ namespace TM.FECentralizada.Business
 
         public static bool ValidateInvoiceDetail(List<InvoiceDetail> invoiceDetail, List<string> messageResult)
         {
+            Tools.Logging.Info("Inicio: Validando Facturas - Detalle");
             bool isValid = true;
 
             foreach (var detail in invoiceDetail.ToList())
@@ -412,6 +414,7 @@ namespace TM.FECentralizada.Business
                 }
 
             }
+            Tools.Logging.Info("Fin: Validando Facturas - Detalle");
             return isValid;
 
         }
@@ -609,6 +612,7 @@ namespace TM.FECentralizada.Business
 
         public static string CreateInvoiceFile340(List<InvoiceHeader> invoices, List<InvoiceDetail> invoiceDetails, string path)
         {
+            Tools.Logging.Info(string.Format("Inicio: Generando Archivo Norma 340"));
             DateTime current = DateTime.Now;
             //string fileName = $"FACT_{current.Year}{current.Month}{current.Day}_{current.Hour}_{current.Year}{current.Month}{current.Day}{current.Hour}{current.Minute}{current.Second}.txt";
             string fileName = "FACT_06" + current.ToString("_yyyyMMddHHmmss") + ".txt";
@@ -626,21 +630,21 @@ namespace TM.FECentralizada.Business
                         $"{invoice.totalVenta}|{invoice.tipooperacion}|{invoice.leyendas}||||{invoice.porcentajeDetraccion}|{invoice.totalDetraccion}|{invoice.descripcionDetraccion}|" +
                         $"{invoice.ordenCompra}|{invoice.datosAdicionales}|{invoice.codigoestablecimientosunat}|{invoice.montototalimpuestos}|{invoice.cdgcodigomotivo}|{invoice.cdgporcentaje}|" +
                         $"{invoice.descuentosGlobales}|{invoice.cdgmontobasecargo}|{invoice.sumimpuestosopgratuitas}|{invoice.totalvalorventa}|{invoice.totalprecioventa}|" +
+
                         $"{invoice.monredimporttotal}|||||||||");
 
                     var currentDetails = invoiceDetails.Where(x => x.serieNumero == invoice.serieNumero).ToList();
 
                     foreach (InvoiceDetail invoiceDetail in currentDetails)
                     {
-
                         writer.WriteLine($"D|{invoiceDetail.numeroOrdenItem}|{invoiceDetail.unidadMedida}|{invoiceDetail.cantidad}|" +
-                            $"{invoiceDetail.codigoProducto}|{invoiceDetail.codigoproductosunat}|{invoiceDetail.descripcion}|" +
-                            $"{invoiceDetail.montobaseigv}|{invoiceDetail.importeIgv}|{invoiceDetail.codigoRazonExoneracion}|{invoiceDetail.tasaigv}|" +
-                            $"{invoiceDetail.importeDescuento}|{invoiceDetail.codigodescuento}|{invoiceDetail.factordescuento}|" +
-                            $"{invoiceDetail.montobasedescuento}|{invoiceDetail.codigoImporteReferencial}|{invoiceDetail.importeReferencial}|" +
-                            $"{invoiceDetail.importeUnitarioSinImpuesto}|{invoiceDetail.importeTotalSinImpuesto}|{invoiceDetail.montototalimpuestoitem}|" +
-                            $"||{invoiceDetail.codigoImpUnitConImpuesto}|{invoiceDetail.importeUnitarioConImpuesto}|{invoiceDetail.numeroExpediente}|{invoiceDetail.codigoUnidadEjecutora}|" +
-                            $"{invoiceDetail.numeroContrato}|{invoiceDetail.numeroProcesoSeleccion}");
+                           $"{invoiceDetail.codigoProducto}|{invoiceDetail.codigoproductosunat}|{invoiceDetail.descripcion}|" +
+                           $"{invoiceDetail.montobaseigv}|{invoiceDetail.importeIgv}|{invoiceDetail.codigoRazonExoneracion}|{invoiceDetail.tasaigv}|" +
+                           $"{invoiceDetail.importeDescuento}|{invoiceDetail.codigodescuento}|{invoiceDetail.factordescuento}|" +
+                           $"{invoiceDetail.montobasedescuento}|{invoiceDetail.codigoImporteReferencial}|{invoiceDetail.importeReferencial}|" +
+                           $"{invoiceDetail.importeUnitarioSinImpuesto}|{invoiceDetail.importeTotalSinImpuesto}|{invoiceDetail.montototalimpuestoitem}|" +
+                           $"||{invoiceDetail.codigoImpUnitConImpuesto}|{invoiceDetail.importeUnitarioConImpuesto}|{invoiceDetail.numeroExpediente}|{invoiceDetail.codigoUnidadEjecutora}|" +
+                           $"{invoiceDetail.numeroContrato}|{invoiceDetail.numeroProcesoSeleccion}");
                     }
 
 
@@ -649,6 +653,7 @@ namespace TM.FECentralizada.Business
 
 
             }
+            Tools.Logging.Info(string.Format("Fin: Generando Archivo Norma 340"));
             return Path.Combine(path, fileName);
         }
 

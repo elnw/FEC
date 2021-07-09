@@ -6,7 +6,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using IBM.Data.Informix;
+using System.Data.Odbc;
 using TM.FECentralizada.Entities.Isis;
 
 namespace TM.FECentralizada.Data
@@ -15,93 +15,100 @@ namespace TM.FECentralizada.Data
     {
         public static List<InvoiceHeader> ReadInvoiceHeader(DateTime timestamp, ref bool debeRepetir)
         {
-            Tools.Logging.Info("ReadInvoiceHeader");
             List<InvoiceHeader> ListHeaders = new List<InvoiceHeader>();
             InvoiceHeader objBillHeader = new InvoiceHeader();
             try
             {
-                //using (OracleConnection connection = (OracleConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.Oracle))
-                using (IfxConnection conn = (IfxConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.Informix))
+                using (OdbcConnection DbConnection = new OdbcConnection("DSN=Isis"))
                 {
-                    Tools.Logging.Info("conn");
-                    //using (OracleCommand cmd = new OracleCommand("PKG_PACIFYC_CONSULTAS.SP_LEER_FACTURA_CAB", connection))
-                    using (IfxCommand cmd = new IfxCommand(Tools.Constants.IsisRead_Select_Header, conn))
+                    using (OdbcCommand DbCommand = DbConnection.CreateCommand())
                     {
-                        Tools.Logging.Info("  using (IfxCommand cmd = new IfxCommand(Tools.Constants.IsisRead_Select_Header, conn))");
-                        conn.Open();
-                        cmd.CommandType = CommandType.Text;
+                        DbCommand.CommandText = Tools.Constants.IsisRead_Select_Header;
+                        DbCommand.CommandType = CommandType.Text;
+                        DbCommand.CommandTimeout = 60*10;
 
-                        IfxDataReader dr = cmd.ExecuteReader();
-                        Tools.Logging.Info("ExecuteReader");
-                        if (dr != null && dr.HasRows)
+                        DbConnection.Open();
+
+                        using (var dr = DbCommand.ExecuteReader())
                         {
-                            Tools.Logging.Info(" if (dr != null && dr.HasRows)");
+                            int headers = 0;
+
+
                             while (dr.Read())
                             {
-                                Tools.Logging.Info("while (dr.Read())");
+                                
+                                headers++;
+                                Tools.Logging.Info("vuelta:" + headers);
+                                Tools.Logging.Info("serienumero:" + dr["serienumero"].ToString());
                                 ListHeaders.Add
-                                (
-                                    objBillHeader = new InvoiceHeader()
-                                    {
-                                        serieNumero = dr["serieNumero"].ToString(),
-                                        fechaEmision = dr["fechaEmision"].ToString(),
-                                        Horadeemision = dr["horadeEmision"].ToString(),
-                                        tipoMoneda = dr["tipoMoneda"].ToString(),
-                                        numeroDocumentoEmisor = (dr["numeroDocumentoEmisor"].ToString()),
-                                        tipoDocumentoAdquiriente = dr["tipoDocumentoAdquiriente"].ToString(),
-                                        numeroDocumentoAdquiriente = dr["numeroDocumentoAdquiriente"].ToString(),
-                                        razonSocialAdquiriente = dr["razonSocialAdquiriente"].ToString(),
-                                        direccionAdquiriente = dr["direccionAdquiriente"].ToString(),
-                                        tipoReferencia_1 = dr["tipoReferencia_1"].ToString(),
-                                        numeroDocumentoReferencia_1 = dr["numeroDocumentoReferencia_1"].ToString(),
-                                        tipoReferencia_2 = dr["tipoReferencia_2"].ToString(),
-                                        numeroDocumentoReferencia_2 = dr["numeroDocumentoReferencia_2"].ToString(),
-                                        totalVVNetoOpGravadas = (dr["totalVVNetoOpGravadas"].ToString()),
-                                        totalVVNetoOpNoGravada = (dr["totalVVNetoOpNoGravada"].ToString()),
-                                        conceptovvnetoopnogravada = (dr["conceptoVVNetoOpNoGravada"].ToString()),
-                                        totalVVNetoOpExoneradas = (dr["totalVVNetoOpExoneradas"].ToString()),
-                                        conceptovvnetoopexoneradas = (dr["conceptoVVNetoOpExoneradas"].ToString()),
-                                        totalVVNetoOpGratuitas = (dr["totalVVNetoOpGratuitas"].ToString()),
-                                        conceptovvnetoopgratuitas = (dr["conceptoVVNetoOpGratuitas"].ToString()),
-                                        totalVVNetoExportacion = (dr["totalVVNetoExportacion"].ToString()),
-                                        conceptovvexportacion = (dr["conceptoVVExportacion"].ToString()),
-                                        totalDescuentos = (dr["totalDescuentos"].ToString()),
-                                        totalIgv = (dr["totalIgv"].ToString()),
-                                        totalVenta = (dr["totalVenta"].ToString()),
-                                        tipooperacion = dr["tipoOperacion"].ToString(),
-                                        leyendas = dr["leyendas"].ToString(),
-                                        textoLeyenda_3 = dr["textoleyenda_3"].ToString(),
-                                        textoLeyenda_4 = dr["textoleyenda_4"].ToString(),
-                                        porcentajeDetraccion = (dr["porcentajeDetraccion"].ToString()),
-                                        totalDetraccion = (dr["totalDetraccion"].ToString()),
-                                        descripcionDetraccion = dr["descripcionDetraccion"].ToString(),
-                                        ordenCompra = dr["ordenCompra"].ToString(),
-                                        datosAdicionales = dr["datosAdicionales"].ToString(),
-                                        codigoestablecimientosunat = dr["codigoEstablecimientoSunat"].ToString(),
-                                        montototalimpuestos = (dr["montoTotalImpuestos"].ToString()),
-                                        cdgcodigomotivo = dr["cdgCodigoMotivo"].ToString(),
-                                        cdgporcentaje = (dr["cdgPorcentaje"].ToString()),
-                                        descuentosGlobales = (dr["descuentosGlobales"].ToString()),
-                                        cdgmontobasecargo = (dr["cdgMontoBaseCargo"].ToString()),
-                                        sumimpuestosopgratuitas = (dr["sumImpuestosOpGratuitas"].ToString()),
-                                        totalvalorventa = (dr["totalValorVenta"].ToString()),
-                                        totalprecioventa = (dr["totalPrecioVenta"].ToString()),
-                                        monredimporttotal = String.IsNullOrWhiteSpace(dr["monRedImportTotal"].ToString()) ? "0" : dr["monRedImportTotal"].ToString(),
-                                        codSistema = "02",
-                                        codigoCarga = $"FACT_{timestamp.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT)}",
-                                        nombreArchivo = $"FACT_{timestamp.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT)}",
-                                        origen = "MA",
-                                        estado = "PE",
-                                        fechaRegistro = timestamp.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT)
-                                    }
-                                    );
-                                ListHeaders.Add(objBillHeader);
-                                Tools.Logging.Info(string.Format("Fin ReadConfiguration"));
-                            }
-                        }
-                    }
-                }
+                                            (
+                                                objBillHeader = new InvoiceHeader()
+                                                {
 
+                                                    serieNumero = dr["serienumero"].ToString(),
+                                                    fechaEmision = dr["fechaemision"].ToString(),
+                                                    Horadeemision = dr["horadeemision"].ToString(),
+                                                    tipoMoneda = dr["tipomoneda"].ToString(),
+                                                    numeroDocumentoEmisor = (dr["numerodocumentoemisor"].ToString()),
+                                                    tipoDocumentoAdquiriente = dr["tipodocumentoadquiriente"].ToString(),
+                                                    numeroDocumentoAdquiriente = dr["numerodocumentoadquiriente"].ToString(),
+                                                    razonSocialAdquiriente = dr["razonsocialadquiriente"].ToString(),
+                                                    direccionAdquiriente = dr["direccionadquiriente"].ToString(),
+                                                    tipoReferencia_1 = dr["tiporeferencia_1"].ToString(),
+                                                    numeroDocumentoReferencia_1 = dr["numerodocumentoreferencia_1"].ToString(),
+                                                    tipoReferencia_2 = dr["tiporeferencia_2"].ToString(),
+                                                    numeroDocumentoReferencia_2 = dr["numerodocumentoreferencia_2"].ToString(),
+                                                    totalVVNetoOpGravadas = (dr["totalvvnetoopgravadas"].ToString()),
+                                                    totalVVNetoOpNoGravada = (dr["totalvvnetoopnogravada"].ToString()),
+                                                    conceptovvnetoopnogravada = (dr["conceptovvnetoopnogravada"].ToString()),
+                                                    totalVVNetoOpExoneradas = (dr["totalvvnetoopexoneradas"].ToString()),
+                                                    conceptovvnetoopexoneradas = (dr["conceptovvnetoopexoneradas"].ToString()),
+                                                    totalVVNetoOpGratuitas = (dr["totalvvnetoopgratuitas"].ToString()),
+                                                    conceptovvnetoopgratuitas = (dr["conceptovvnetoopgratuitas"].ToString()),
+                                                    totalVVNetoExportacion = (dr["totalvvnetoexportacion"].ToString()),
+                                                    conceptovvexportacion = (dr["conceptovvexportacion"].ToString()),
+                                                    totalDescuentos = (dr["totaldescuentos"].ToString()),
+                                                    totalIgv = (dr["totaligv"].ToString()),
+                                                    totalVenta = (dr["totalventa"].ToString()),
+                                                    tipooperacion = dr["tipooperacion"].ToString(),
+                                                    leyendas = dr["leyendas"].ToString(),
+                                                    textoLeyenda_3 = dr["textoleyenda_3"].ToString(),
+                                                    textoLeyenda_4 = dr["textoleyenda_4"].ToString(),
+                                                    porcentajeDetraccion = (dr["porcentajedetraccion"].ToString()),
+                                                    totalDetraccion = (dr["totaldetraccion"].ToString()),
+                                                    descripcionDetraccion = dr["descripciondetraccion"].ToString(),
+                                                    ordenCompra = dr["ordencompra"].ToString(),
+                                                    datosAdicionales = dr["datosadicionales"].ToString(),
+                                                    codigoestablecimientosunat = dr["codigoestablecimientosunat"].ToString(),
+                                                    montototalimpuestos = (dr["montototalimpuestos"].ToString()),
+                                                    cdgcodigomotivo = dr["cdgcodigomotivo"].ToString(),
+                                                    cdgporcentaje = (dr["cdgporcentaje"].ToString()),
+                                                    descuentosGlobales = (dr["descuentosglobales"].ToString()),
+                                                    cdgmontobasecargo = (dr["cdgmontobasecargo"].ToString()),
+                                                    sumimpuestosopgratuitas = (dr["sumimpuestosopgratuitas"].ToString()),
+                                                    totalvalorventa = (dr["totalvalorventa"].ToString()),
+                                                    totalprecioventa = (dr["totalprecioventa"].ToString()),
+                                                    monredimporttotal = String.IsNullOrWhiteSpace(dr["monredimporttotal"].ToString()) ? "0" : dr["monredimporttotal"].ToString(),
+                                                    codSistema = "02",
+                                                    codigoCarga = $"FACT_{timestamp.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT)}",
+                                                    nombreArchivo = $"FACT_{timestamp.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT)}",
+                                                    origen = "MA",
+                                                    estado = "PE",
+                                                    fechaRegistro = timestamp.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT)
+                                                }
+                                                );
+                                ListHeaders.Add(objBillHeader);
+                            }
+
+                            //dr.Close();
+                            //DbCommand.Dispose();
+                            //DbConnection.Close();
+                            Tools.Logging.Info("Cantidad de Facturas encontrados en Isis: " + headers);
+                        }
+
+                    }
+
+                }
             }
             catch (Exception ex)
             {
@@ -116,67 +123,61 @@ namespace TM.FECentralizada.Data
             InvoiceDetail billDetail = new InvoiceDetail();
             try
             {
-                //using (OracleConnection connection = (OracleConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.Oracle))
-                using (IfxConnection conn = (IfxConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.Informix))
+                OdbcConnection DbConnection = new OdbcConnection("DSN=Isis");
+                DbConnection.Open();
+                OdbcCommand DbCommand = DbConnection.CreateCommand();
+                DbCommand.CommandText = Tools.Constants.IsisRead_Select_Detail;
+                OdbcDataReader dr = DbCommand.ExecuteReader();
+                int fCount = dr.FieldCount;
+
+                int details = 0;
+                if (dr != null && dr.HasRows)
                 {
-                    //using (OracleCommand cmd = new OracleCommand("PKG_PACIFYC_CONSULTAS.SP_LEER_FACTURA_CAB", connection))
-                    using (IfxCommand cmd = new IfxCommand(Tools.Constants.IsisRead_Select_Detail, conn))
+                    while (dr.Read())
                     {
-
-                        conn.Open();
-                        cmd.CommandType = CommandType.Text;
-
-                        IfxDataReader dr = cmd.ExecuteReader();
-                        if (dr != null && dr.HasRows)
-                        {
-                            while (dr.Read())
-                            {
-                                invoiceDetails.Add
-                                (
-                                    billDetail = new InvoiceDetail()
-                                    {
-                                        serieNumero = dr["serieNumero"].ToString(),
-                                        numeroOrdenItem = dr["numeroOrdenItem"].ToString(),
-                                        unidadMedida = dr["unidadMedida"].ToString(),
-                                        cantidad = (dr["cantidad"].ToString()),
-                                        codigoProducto = dr["codigoProducto"].ToString(),
-                                        codigoproductosunat = dr["codigoProductoSunat"].ToString(),
-                                        descripcion = dr["descripcion"].ToString(),
-                                        montobaseigv = dr["montoBaseIGV"].ToString(),
-                                        importeIgv = (dr["importeIGV"].ToString()),
-                                        codigoRazonExoneracion = dr["codigoRazonExoneracion"].ToString(),
-                                        tasaigv = (dr["tasaIGV"].ToString()),
-                                        importeDescuento = (dr["importeDescuento"].ToString()),
-                                        codigodescuento = dr["codigoDescuento"].ToString(),
-                                        factordescuento = (dr["factorDescuento"].ToString()),
-                                        montobasedescuento = (dr["montoBaseDescuento"].ToString()),
-                                        codigoImporteReferencial = dr["codigoImporteReferencial"].ToString(),
-                                        importeReferencial = (String.IsNullOrWhiteSpace(dr["importeReferencial"].ToString()) ? "0" : dr["importeReferencial"].ToString()),
-                                        importeUnitarioSinImpuesto = (dr["importeUnitarioSinImpuesto"].ToString()),
-                                        importeTotalSinImpuesto = (dr["importeTotalSinImpuesto"].ToString()),
-                                        montototalimpuestoitem = (dr["montoTotalImpuestoItem"].ToString()),
-                                        codigoImpUnitConImpuesto = dr["codigoImpUnitConImpuesto"].ToString(),
-                                        importeUnitarioConImpuesto = (dr["importeUnitarioConImpuesto"].ToString()),
-                                        numeroExpediente = dr["numeroExpediente"].ToString(),
-                                        codigoUnidadEjecutora = dr["codigoUnidadEjecutora"].ToString(),
-                                        numeroContrato = dr["numeroContrato"].ToString(),
-                                        numeroProcesoSeleccion = dr["numeroProcesoSeleccion"].ToString(),
-                                        codSistema = "02",
-                                        codigoCarga = $"FACT_{timestamp.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT)}",
-                                        nombreArchivo = $"FACT_{timestamp.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT)}"
-                                    }
-                                    );
-                                invoiceDetails.Add(billDetail);
-                            }
-                            Tools.Logging.Info(string.Format("Fin ReadConfiguration"));
-
-
-                        }
+                        details++;
+                        invoiceDetails.Add
+                                 (
+                                     billDetail = new InvoiceDetail()
+                                     {
+                                         serieNumero = dr["serienumero"].ToString(),
+                                         numeroOrdenItem = dr["numeroordenitem"].ToString(),
+                                         unidadMedida = dr["unidadmedida"].ToString(),
+                                         cantidad = (dr["cantidad"].ToString()),
+                                         codigoProducto = dr["codigoproducto"].ToString(),
+                                         codigoproductosunat = dr["codigoproductosunat"].ToString(),
+                                         descripcion = dr["descripcion"].ToString(),
+                                         montobaseigv = dr["montobaseigv"].ToString(),
+                                         importeIgv = (dr["importeigv"].ToString()),
+                                         codigoRazonExoneracion = dr["codigorazonexoneracion"].ToString(),
+                                         tasaigv = (dr["tasaigv"].ToString()),
+                                         importeDescuento = (dr["importedescuento"].ToString()),
+                                         codigodescuento = dr["codigodescuento"].ToString(),
+                                         factordescuento = (dr["factordescuento"].ToString()),
+                                         montobasedescuento = (dr["montobasedescuento"].ToString()),
+                                         codigoImporteReferencial = dr["codigoimportereferencial"].ToString(),
+                                         importeReferencial = (String.IsNullOrWhiteSpace(dr["importereferencial"].ToString()) ? "0" : dr["importeReferencial"].ToString()),
+                                         importeUnitarioSinImpuesto = (dr["importeunitariosinimpuesto"].ToString()),
+                                         importeTotalSinImpuesto = (dr["importetotalsinimpuesto"].ToString()),
+                                         montototalimpuestoitem = (dr["montototalimpuestoitem"].ToString()),
+                                         codigoImpUnitConImpuesto = dr["codigoimpunitconimpuesto"].ToString(),
+                                         importeUnitarioConImpuesto = (dr["importeunitarioconimpuesto"].ToString()),
+                                         numeroExpediente = dr["numeroexpediente"].ToString(),
+                                         codigoUnidadEjecutora = dr["codigounidadejecutora"].ToString(),
+                                         numeroContrato = dr["numerocontrato"].ToString(),
+                                         numeroProcesoSeleccion = dr["numeroprocesoseleccion"].ToString(),
+                                         codSistema = "02",
+                                         codigoCarga = $"FACT_{timestamp.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT)}",
+                                         nombreArchivo = $"FACT_{timestamp.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT)}"
+                                     }
+                                     );
+                        invoiceDetails.Add(billDetail);
                     }
-
                 }
-
-
+                dr.Close();
+                DbCommand.Dispose();
+                DbConnection.Close();
+                Tools.Logging.Info("Cantidad de Facturas-Detalle encontrados en Isis: " + details);
 
             }
             catch (Exception ex)
@@ -192,7 +193,7 @@ namespace TM.FECentralizada.Data
             List<BillHeader> BillHeaders = new List<BillHeader>();
             BillHeader objBillHeader = new BillHeader();
             try
-            {
+            {/*
                 //using (OracleConnection connection = (OracleConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.Oracle))
                 using (IfxConnection conn = (IfxConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.Informix))
                 {
@@ -266,7 +267,7 @@ namespace TM.FECentralizada.Data
                         }
                     }
                 }
-
+            */
             }
             catch (Exception ex)
             {
@@ -280,7 +281,7 @@ namespace TM.FECentralizada.Data
             List<BillDetail> BillDetails = new List<BillDetail>();
             BillDetail billDetail = new BillDetail();
             try
-            {
+            {/*
                 //using (OracleConnection connection = (OracleConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.Oracle))
                 using (IfxConnection conn = (IfxConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.Informix))
                 {
@@ -339,7 +340,7 @@ namespace TM.FECentralizada.Data
 
                 }
 
-
+*/
 
             }
             catch (Exception ex)
@@ -356,7 +357,7 @@ namespace TM.FECentralizada.Data
             List<CreditNoteHeader> creditNoteHeaders = new List<CreditNoteHeader>();
             CreditNoteHeader objcreditNoteHeaders = new CreditNoteHeader();
             try
-            {
+            {/*
                 //using (OracleConnection connection = (OracleConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.Oracle))
                 using (IfxConnection conn = (IfxConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.Informix))
                 {
@@ -436,7 +437,7 @@ namespace TM.FECentralizada.Data
 
 
                     }
-                }
+                }*/
             }
             catch (Exception ex)
             {
@@ -450,7 +451,7 @@ namespace TM.FECentralizada.Data
             List<CreditNoteDetail> creditNoteDetails = new List<CreditNoteDetail>();
             CreditNoteDetail objcreditNoteDetails = new CreditNoteDetail();
             try
-            {
+            {/*
                 //using (OracleConnection connection = (OracleConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.Oracle))
                 using (IfxConnection conn = (IfxConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.Informix))
                 {
@@ -507,7 +508,7 @@ namespace TM.FECentralizada.Data
 
 
                     }
-                }
+                }*/
             }
             catch (Exception ex)
             {
@@ -521,7 +522,7 @@ namespace TM.FECentralizada.Data
             List<DebitNoteHeader> debitNoteHeader = new List<DebitNoteHeader>();
             DebitNoteHeader objdebitNoteHeader = new DebitNoteHeader();
             try
-            {
+            {/*
                 //using (OracleConnection connection = (OracleConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.Oracle))
                 using (IfxConnection conn = (IfxConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.Informix))
                 {
@@ -599,7 +600,7 @@ namespace TM.FECentralizada.Data
                         }
 
                     }
-                }
+                }*/
             }
             catch (Exception ex)
             {
@@ -613,7 +614,7 @@ namespace TM.FECentralizada.Data
             List<DebitNoteDetail> debitNoteDetails = new List<DebitNoteDetail>();
             DebitNoteDetail objdebitNoteDetails = new DebitNoteDetail();
             try
-            {
+            {/*
                 //using (OracleConnection connection = (OracleConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.Oracle))
                 using (IfxConnection conn = (IfxConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.Informix))
                 {
@@ -670,7 +671,7 @@ namespace TM.FECentralizada.Data
 
 
                     }
-                }
+                }*/
             }
             catch (Exception ex)
             {
@@ -753,7 +754,7 @@ namespace TM.FECentralizada.Data
             try
             {
                 //using (OracleConnection connection = (OracleConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.Oracle))
-                using (IfxConnection conn = (IfxConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.Informix))
+                /*using (IfxConnection conn = (IfxConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.Informix))
                 {
 
                     //using (OracleCommand cmd = connection.CreateCommand())
@@ -773,19 +774,20 @@ namespace TM.FECentralizada.Data
                         String ser = String.Join("','", listSerialNumbers);
 
                     }
-                }
+                }*/
             }
             catch (Exception ex)
             {
                 Tools.Logging.Error(ex.Message);
             }
-            
+
         }
-        
+
         public static void InvokeUpdate(Int32 ar)
         {
             try
             {
+                /*
                 //using (OracleConnection connection = (OracleConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.Oracle))
                 using (IfxConnection conn = (IfxConnection)Configuration.FactoriaConexion.GetConnection(Configuration.DbConnectionId.Informix))
                 {
@@ -872,7 +874,7 @@ namespace TM.FECentralizada.Data
 
                         }
                     }
-                }
+                }*/
             }
             catch (Exception ex)
             {
@@ -880,7 +882,7 @@ namespace TM.FECentralizada.Data
             }
 
         }
-        
+
 
 
 
