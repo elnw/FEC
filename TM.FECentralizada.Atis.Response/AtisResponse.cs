@@ -63,6 +63,8 @@ namespace TM.FECentralizada.Atis.Response
 
                 Tools.Logging.Info("Inicio : Procesar documentos de BD Atis");
 
+                Tuple<List<string>, int> tpInvoice = null, tpBill = null, tpCreditNote = null, tpDebitNote = null;
+
                 //Invoice(ParametersInvoce);
                 /*Bill(ParametersBill);
                 CreditNote(ParametersCreditNote);
@@ -70,36 +72,117 @@ namespace TM.FECentralizada.Atis.Response
                 //parallel invoke
 
                 Parallel.Invoke(
-                    ()=> Invoice(ParametersInvoce),
-                    () =>  Bill(ParametersBill),
-                    () =>  CreditNote(ParametersCreditNote),
-                    () => DebitNote(ParametersDebitNote)
+                    ()=> tpInvoice = Invoice(ParametersInvoce),
+                    () => tpBill = Bill(ParametersBill),
+                    () => tpCreditNote = CreditNote(ParametersCreditNote),
+                    () => tpDebitNote = DebitNote(ParametersDebitNote)
                     );
 
+                Tools.Logging.Info("Fin : Procesar documentos de Atis");
+
+                Tools.Logging.Info("Inicio: Enviar respuesta a Legado - Atis");
+
+                List<string> finalFile = new List<string>();
+
+                if (tpInvoice != null && tpInvoice.Item1 != null)
+                {
+                    finalFile.AddRange(tpInvoice.Item1);
+                }
+
+                if (tpBill != null && tpBill.Item1 != null)
+                {
+                    finalFile.AddRange(tpBill.Item1);
+                }
+
+                if (tpCreditNote != null && tpCreditNote.Item1 != null)
+                {
+                    finalFile.AddRange(tpCreditNote.Item1);
+                }
+
+                if (tpDebitNote != null && tpDebitNote.Item1 != null)
+                {
+                    finalFile.AddRange(tpDebitNote.Item1);
+                }
+
+                if (finalFile.Count > 0)
+                {
+                    Tools.Logging.Info("Fin : Consolidar archivo de respuesta FTP - Atis");
+
+                    Tools.Logging.Info("Inicio: Enviar archivo consolidado - Atis");
+                    Parameters ftpParameterOut = ParametersInvoce.FirstOrDefault(x => x.KeyParam == Tools.Constants.FTP_CONFIG_OUTPUT);
+                    FileServer ftpOutConfig = Business.Common.GetParameterDeserialized<FileServer>(ftpParameterOut);
+
+                    bool didSentFile = SendResponseFile(finalFile, ftpOutConfig);
+                    Tools.Logging.Info("Fin: Enviar archivo consolidado - Atis");
+
+                    Tools.Logging.Info("Inicio: Actualizar auditoria - Atis");
+                    if (didSentFile)
+                    {
+                        Business.Common.UpdateAudit(tpInvoice.Item2, Tools.Constants.ENVIADO_LEGADO, 1);
+                        Business.Common.UpdateAudit(tpBill.Item2, Tools.Constants.ENVIADO_LEGADO, 1);
+                        Business.Common.UpdateAudit(tpCreditNote.Item2, Tools.Constants.ENVIADO_LEGADO, 1);
+                        Business.Common.UpdateAudit(tpDebitNote.Item2, Tools.Constants.ENVIADO_LEGADO, 1);
+                    }
+                    else
+                    {
+                        Business.Common.UpdateAudit(tpInvoice.Item2, Tools.Constants.ERROR_FECENTRALIZADA, 1);
+                        Business.Common.UpdateAudit(tpBill.Item2, Tools.Constants.ERROR_FECENTRALIZADA, 1);
+                        Business.Common.UpdateAudit(tpCreditNote.Item2, Tools.Constants.ERROR_FECENTRALIZADA, 1);
+                        Business.Common.UpdateAudit(tpDebitNote.Item2, Tools.Constants.ERROR_FECENTRALIZADA, 1);
+                    }
+                    Tools.Logging.Info("Fin:  Actualizar auditoria - Atis");
+
+                    Parameters ftpParameterInput = ParametersInvoce.FirstOrDefault(x => x.KeyParam == Tools.Constants.FTP_CONFIG_INPUT);
+                    FileServer ftpInputConfig = Business.Common.GetParameterDeserialized<FileServer>(ftpParameterInput);
+                    MoveProcessedFiles(ftpInputConfig, "RPTA_FACT_03");
+
+                    ftpParameterInput = ParametersBill.FirstOrDefault(x => x.KeyParam == Tools.Constants.FTP_CONFIG_INPUT);
+                    ftpInputConfig = Business.Common.GetParameterDeserialized<FileServer>(ftpParameterInput);
+                    MoveProcessedFiles(ftpInputConfig, "RPTA_BOLE_03");
+
+                    ftpParameterInput = ParametersCreditNote.FirstOrDefault(x => x.KeyParam == Tools.Constants.FTP_CONFIG_INPUT);
+                    ftpInputConfig = Business.Common.GetParameterDeserialized<FileServer>(ftpParameterInput);
+                    MoveProcessedFiles(ftpInputConfig, "RPTA_NCRE_03");
+
+                    ftpParameterInput = ParametersDebitNote.FirstOrDefault(x => x.KeyParam == Tools.Constants.FTP_CONFIG_INPUT);
+                    ftpInputConfig = Business.Common.GetParameterDeserialized<FileServer>(ftpParameterInput);
+                    MoveProcessedFiles(ftpInputConfig, "RPTA_NDEB_03");
+
+                }
+
+                Tools.Logging.Info("Fin: Enviar respuesta a Legado - Atis");
 
             }
             else
             {
                 Tools.Logging.Error("Ocurrió un error al obtener la configuración para atis.");
             }
-            Tools.Logging.Info("Fin del Proceso: Lectura Atis.");
+            Tools.Logging.Info("Fin del Proceso: Respuesta Atis.");
         }
 
-        private void MakeResponse(string file, List<Parameters> oListParameters)
+        private void MoveProcessedFiles(FileServer fileServerConfig, string sufix)
         {
-            DateTime timestamp = DateTime.Now;
-            Parameters ftpParameterOut = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.FTP_CONFIG_OUTPUT);
-            FileServer fileServerConfigOut = Business.Common.GetParameterDeserialized<Entities.Common.FileServer>(ftpParameterOut);
-            
-            string FileName = $"RPTA_FACT_{timestamp.ToString("yyyyMMdd")}_230000.txt";
-
-            Tools.FileServer.DownloadFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, file, true, System.IO.Path.GetTempPath());
- 
-
-
+            Tools.Logging.Info("Inicio :  Mover archivos procesados a ruta PROC ");
+            List<String> inputFilesFTP = Tools.FileServer.ListDirectory(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory);
+            inputFilesFTP = inputFilesFTP.Where(x => x.StartsWith(sufix)).ToList();
+            foreach (string file in inputFilesFTP)
+            {
+                Tools.FileServer.DownloadFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory, file, true, System.IO.Path.GetTempPath());
+                Tools.FileServer.UploadFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory + "/PROC/", file, System.IO.File.ReadAllBytes(System.IO.Path.GetTempPath() + "/" + file));
+                Tools.FileServer.DeleteFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory, file);
+            };
+            Tools.Logging.Info("Inicio : Mover archivos procesados a ruta PROC ");
         }
 
-        private void Invoice(List<Parameters> oListParameters)
+        private bool SendResponseFile(List<string> finalFile, FileServer fileServerOutConfig)
+        {
+            byte[] finalArray = Tools.Common.CreateFileText(finalFile);
+            DateTime currentTime = DateTime.Now;
+            if (!fileServerOutConfig.Directory.EndsWith("/")) fileServerOutConfig.Directory += "/";
+            return Tools.FileServer.UploadFile(fileServerOutConfig.Host, fileServerOutConfig.Port, fileServerOutConfig.User, fileServerOutConfig.Password, fileServerOutConfig.Directory, $"RPTA_{currentTime.ToString("yyyyMMdd_")}230000.txt", finalArray);
+        }
+
+        private Tuple<List<string>, int> Invoice(List<Parameters> oListParameters)
         {
 
             ServiceConfig serviceConfig;
@@ -187,50 +270,10 @@ namespace TM.FECentralizada.Atis.Response
 
                                     ListDataFile.Add(row);
                                 }
+
                                 
 
-                                try
-                                {
-                                    Tools.Logging.Info($"Inicio : Envío de Archivo Respuesta - Atis Response.");
-                                    string FileName = $"RPTA_FACT_{timestamp.ToString("yyyyMMdd")}_230000.txt";
-                                    if (ftpParameterOut != null)
-                                    {
-                                        FileServer fileServerConfigOut = Business.Common.GetParameterDeserialized<Entities.Common.FileServer>(ftpParameterOut);
-
-                                        var currentResponseFile = Tools.FileServer.DownloadFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName);
-
-                                        if(currentResponseFile!= null && currentResponseFile.Count > 0)
-                                        {
-                                            Tools.FileServer.DeleteFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName);
-                                        }
-
-                                        currentResponseFile.AddRange(ListDataFile);
-                                        byte[] ResultBytes = Tools.Common.CreateFileText(currentResponseFile);
-
-                                        Tools.FileServer.UploadFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName, ResultBytes);
-
-                                        Tools.Logging.Info("Inicio :  Mover archivos procesados a ruta PROC ");
-                                        List<String> inputFilesFTP = Tools.FileServer.ListDirectory(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory);
-                                        inputFilesFTP = inputFilesFTP.Where(x => x.StartsWith("RPTA_FACT_03")).ToList();
-                                        foreach (string file in inputFilesFTP)
-                                        {
-                                            Tools.FileServer.DownloadFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory, file, true, System.IO.Path.GetTempPath());
-                                            Tools.FileServer.UploadFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory + "/PROC/", file, System.IO.File.ReadAllBytes(System.IO.Path.GetTempPath() + "/" + file));
-                                            Tools.FileServer.DeleteFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory, file);
-                                        };
-                                        Tools.Logging.Info("Inicio : Mover archivos procesados a ruta PROC ");
-
-                                    }
-                                    else
-                                    {
-                                        Tools.Logging.Error("No se encontró el parámetro de configuracion FTP_OUTPUT - Atis Response");
-                                    }
-                                    Tools.Logging.Info($"Fin : Envío de Archivo Respuesta - Atis Response.");
-                                }
-                                catch (Exception ex)
-                                {
-                                    Tools.Logging.Error($"Error : Envío de Archivo Respuesta - Atis Response = {ex.Message}");
-                                }
+                                return new Tuple<List<string>, int>(ListDataFile, auditId);
 
                             }
                             else {
@@ -256,7 +299,7 @@ namespace TM.FECentralizada.Atis.Response
                     else
                     {
                         Tools.Logging.Info("No se encontraron archivos por procesar - Atis Response");
-                        auditId = TM.FECentralizada.Business.Common.InsertAudit(DateTime.Now.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT), 2, Tools.Constants.NO_LEIDO, 0, 1, 193);
+                        //auditId = TM.FECentralizada.Business.Common.InsertAudit(DateTime.Now.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT), 2, Tools.Constants.NO_LEIDO, 0, 1, 193);
                     }
 
 
@@ -268,9 +311,9 @@ namespace TM.FECentralizada.Atis.Response
                 Tools.Logging.Error("No se encontró el parámetro de configuracion KEYCONFIG - Atis Response");
             }
 
-            
+            return null;   
         }
-        private void Bill(List<Parameters> oListParameters)
+        private Tuple<List<string>, int> Bill(List<Parameters> oListParameters)
         {
             ServiceConfig serviceConfig;
             Mail mailConfig;
@@ -359,49 +402,7 @@ namespace TM.FECentralizada.Atis.Response
                                 }
                                 //byte[] ResultBytes = Tools.Common.CreateFileText(ListDataFile);
 
-                                try
-                                {
-                                    Tools.Logging.Info($"Inicio : Envío de Archivo Respuesta - Atis Response.");
-                                    string FileName = $"RPTA_BOLE_{timestamp.ToString("yyyyMMdd")}_230000.txt";
-                                    if (ftpParameterOut != null)
-                                    {
-                                        FileServer fileServerConfigOut = Business.Common.GetParameterDeserialized<Entities.Common.FileServer>(ftpParameterOut);
-
-                                        var currentResponseFile = Tools.FileServer.DownloadFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName);
-
-                                        if (currentResponseFile != null && currentResponseFile.Count == 0)
-                                        {
-                                            Tools.FileServer.DeleteFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName);
-                                        }
-
-                                        currentResponseFile.AddRange(ListDataFile);
-                                        byte[] ResultBytes = Tools.Common.CreateFileText(currentResponseFile);
-
-
-                                        Tools.FileServer.UploadFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName, ResultBytes);
-
-                                        Tools.Logging.Info("Inicio :  Mover archivos procesados a ruta PROC ");
-                                        List<String> inputFilesFTP = Tools.FileServer.ListDirectory(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory);
-                                        inputFilesFTP = inputFilesFTP.Where(x => x.StartsWith("RPTA_BOLE_03")).ToList();
-                                        foreach (string file in inputFilesFTP)
-                                        {
-                                            Tools.FileServer.DownloadFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory, file, true, System.IO.Path.GetTempPath());
-                                            Tools.FileServer.UploadFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory + "/PROC/", file, System.IO.File.ReadAllBytes(System.IO.Path.GetTempPath() + "/" + file));
-                                            Tools.FileServer.DeleteFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory, file);
-                                        };
-                                        Tools.Logging.Info("Inicio : Mover archivos procesados a ruta PROC ");
-
-                                    }
-                                    else
-                                    {
-                                        Tools.Logging.Error("No se encontró el parámetro de configuracion FTP_OUTPUT - Atis Response");
-                                    }
-                                    Tools.Logging.Info($"Fin : Envío de Archivo Respuesta - Atis Response.");
-                                }
-                                catch (Exception ex)
-                                {
-                                    Tools.Logging.Error($"Error : Envío de Archivo Respuesta - Atis Response = {ex.Message}");
-                                }
+                                return new Tuple<List<string>, int>(ListDataFile, auditId);
 
                             }
                             else
@@ -441,10 +442,10 @@ namespace TM.FECentralizada.Atis.Response
             }
 
 
-
+            return null;
 
         }
-        private void CreditNote(List<Parameters> oListParameters)
+        private Tuple<List<string>, int> CreditNote(List<Parameters> oListParameters)
         {
 
             ServiceConfig serviceConfig;
@@ -534,49 +535,7 @@ namespace TM.FECentralizada.Atis.Response
                                 }
                                 //byte[] ResultBytes = Tools.Common.CreateFileText(ListDataFile);
 
-                                try
-                                {
-                                    Tools.Logging.Info($"Inicio : Envío de Archivo Respuesta - Atis Response.");
-                                    string FileName = $"RPTA_NCRE_{timestamp.ToString("yyyyMMdd")}_230000.txt";
-                                    if (ftpParameterOut != null)
-                                    {
-                                        FileServer fileServerConfigOut = Business.Common.GetParameterDeserialized<Entities.Common.FileServer>(ftpParameterOut);
-
-                                        var currentResponseFile = Tools.FileServer.DownloadFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName);
-
-                                        if (currentResponseFile != null && currentResponseFile.Count > 0)
-                                        {
-                                            Tools.FileServer.DeleteFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName);
-                                        }
-
-                                        currentResponseFile.AddRange(ListDataFile);
-                                        byte[] ResultBytes = Tools.Common.CreateFileText(currentResponseFile);
-
-
-                                        Tools.FileServer.UploadFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName, ResultBytes);
-
-                                        Tools.Logging.Info("Inicio :  Mover archivos procesados a ruta PROC ");
-                                        List<String> inputFilesFTP = Tools.FileServer.ListDirectory(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory);
-                                        inputFilesFTP = inputFilesFTP.Where(x => x.StartsWith("RPTA_NCRE_03")).ToList();
-                                        foreach (string file in inputFilesFTP)
-                                        {
-                                            Tools.FileServer.DownloadFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory, file, true, System.IO.Path.GetTempPath());
-                                            Tools.FileServer.UploadFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory + "/PROC/", file, System.IO.File.ReadAllBytes(System.IO.Path.GetTempPath() + "/" + file));
-                                            Tools.FileServer.DeleteFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory, file);
-                                        };
-                                        Tools.Logging.Info("Inicio : Mover archivos procesados a ruta PROC ");
-
-                                    }
-                                    else
-                                    {
-                                        Tools.Logging.Error("No se encontró el parámetro de configuracion FTP_OUTPUT - Atis Response");
-                                    }
-                                    Tools.Logging.Info($"Fin : Envío de Archivo Respuesta - Atis Response.");
-                                }
-                                catch (Exception ex)
-                                {
-                                    Tools.Logging.Error($"Error : Envío de Archivo Respuesta - Atis Response = {ex.Message}");
-                                }
+                                return new Tuple<List<string>, int>(ListDataFile, auditId);
 
                             }
                             else
@@ -614,8 +573,9 @@ namespace TM.FECentralizada.Atis.Response
             {
                 Tools.Logging.Error("No se encontró el parámetro de configuracion KEYCONFIG - Atis Response");
             }
+            return null;
         }
-        private void DebitNote(List<Parameters> oListParameters)
+        private Tuple<List<string>, int> DebitNote(List<Parameters> oListParameters)
         {
 
             ServiceConfig serviceConfig;
@@ -705,48 +665,7 @@ namespace TM.FECentralizada.Atis.Response
                                 }
                                 //byte[] ResultBytes = Tools.Common.CreateFileText(ListDataFile);
 
-                                try
-                                {
-                                    Tools.Logging.Info($"Inicio : Envío de Archivo Respuesta - Atis Response.");
-                                    string FileName = $"RPTA_NDEB_{timestamp.ToString("yyyyMMdd")}_230000.txt";
-                                    if (ftpParameterOut != null)
-                                    {
-                                        FileServer fileServerConfigOut = Business.Common.GetParameterDeserialized<Entities.Common.FileServer>(ftpParameterOut);
-
-                                        var currentResponseFile = Tools.FileServer.DownloadFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName);
-
-                                        if (currentResponseFile != null && currentResponseFile.Count > 0)
-                                        {
-                                            Tools.FileServer.DeleteFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName);
-                                        }
-
-                                        currentResponseFile.AddRange(ListDataFile);
-                                        byte[] ResultBytes = Tools.Common.CreateFileText(currentResponseFile);
-
-                                        Tools.FileServer.UploadFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, FileName, ResultBytes);
-
-                                        Tools.Logging.Info("Inicio :  Mover archivos procesados a ruta PROC ");
-                                        List<String> inputFilesFTP = Tools.FileServer.ListDirectory(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory);
-                                        inputFilesFTP = inputFilesFTP.Where(x => x.StartsWith("RPTA_NDEB_03")).ToList();
-                                        foreach (string file in inputFilesFTP)
-                                        {
-                                            Tools.FileServer.DownloadFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory, file, true, System.IO.Path.GetTempPath());
-                                            Tools.FileServer.UploadFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory + "/PROC/", file, System.IO.File.ReadAllBytes(System.IO.Path.GetTempPath() + "/" + file));
-                                            Tools.FileServer.DeleteFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory, file);
-                                        };
-                                        Tools.Logging.Info("Inicio : Mover archivos procesados a ruta PROC ");
-
-                                    }
-                                    else
-                                    {
-                                        Tools.Logging.Error("No se encontró el parámetro de configuracion FTP_OUTPUT - Atis Response");
-                                    }
-                                    Tools.Logging.Info($"Fin : Envío de Archivo Respuesta - Atis Response.");
-                                }
-                                catch (Exception ex)
-                                {
-                                    Tools.Logging.Error($"Error : Envío de Archivo Respuesta - Atis Response = {ex.Message}");
-                                }
+                                return new Tuple<List<string>, int>(ListDataFile, auditId);
 
                             }
                             else
@@ -784,6 +703,7 @@ namespace TM.FECentralizada.Atis.Response
             {
                 Tools.Logging.Error("No se encontró el parámetro de configuracion KEYCONFIG - Atis Response");
             }
+            return null;
         }
 
         protected override void OnStop()

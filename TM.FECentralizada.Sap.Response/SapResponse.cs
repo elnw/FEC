@@ -370,7 +370,7 @@ namespace TM.FECentralizada.Sap.Response
                         }
                         else
                         {
-                            Tools.Logging.Error("No se encontró el parámetro de configuracion MAILCONFIG - Atis Response");
+                            Tools.Logging.Error("No se encontró el parámetro de configuracion MAILCONFIG - Sap Response");
                         }
 
                     }
@@ -436,7 +436,7 @@ namespace TM.FECentralizada.Sap.Response
                             }
 
 
-                            Tools.Logging.Info("Inicio: Actualizar documentos en FECentralizada - Atis Response");
+                            Tools.Logging.Info("Inicio: Actualizar documentos en FECentralizada - Sap Response");
 
                             Business.Common.UpdateDebitNoteState(responseFiles);
 
@@ -448,7 +448,7 @@ namespace TM.FECentralizada.Sap.Response
                         }
                         else
                         {
-                            Tools.Logging.Error("No se encontró el parámetro de configuracion MAILCONFIG - Atis Response");
+                            Tools.Logging.Error("No se encontró el parámetro de configuracion MAILCONFIG - Sap Response");
                         }
 
                     }

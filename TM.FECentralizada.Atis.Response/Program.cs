@@ -17,9 +17,6 @@ namespace TM.FECentralizada.Atis.Response
 #if DEBUG
             AtisResponse pacifycResponse = new AtisResponse();
             pacifycResponse.TestProject();
-
-
-
 #else
              Tools.Logging.Configure();
              ServiceBase[] ServicesToRun;

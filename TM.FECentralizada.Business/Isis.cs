@@ -620,13 +620,13 @@ namespace TM.FECentralizada.Business
                     writer.WriteLine($"C|{invoice.serieNumero}|{invoice.fechaEmision}|{invoice.Horadeemision}|" +
                         $"{invoice.tipoMoneda}|{invoice.numeroDocumentoEmisor}|{invoice.tipoDocumentoAdquiriente}|{invoice.numeroDocumentoAdquiriente}|" +
                         $"{invoice.razonSocialAdquiriente}|{invoice.direccionAdquiriente}|{invoice.tipoReferencia_1}|{invoice.numeroDocumentoReferencia_1}|" +
-                        $"{invoice.tipoReferencia_2}|{invoice.numeroDocumentoReferencia_2}|{invoice.totalVVNetoOpGravadas}|{invoice.conceptovvnetoopnogravada}|" +
+                        $"{invoice.tipoReferencia_2}|{invoice.numeroDocumentoReferencia_2}|{invoice.totalVVNetoOpGravadas}|{invoice.totalVVNetoOpNoGravada}|{invoice.conceptovvnetoopnogravada}|" +
                         $"{invoice.totalVVNetoOpExoneradas}|{invoice.conceptovvnetoopexoneradas}|{invoice.totalVVNetoOpGratuitas}|" +
                         $"{invoice.conceptovvnetoopgratuitas}|{invoice.totalVVNetoExportacion}|{invoice.conceptovvexportacion}|{invoice.totalDescuentos}|{invoice.totalIgv}|" +
                         $"{invoice.totalVenta}|{invoice.tipooperacion}|{invoice.leyendas}||||{invoice.porcentajeDetraccion}|{invoice.totalDetraccion}|{invoice.descripcionDetraccion}|" +
                         $"{invoice.ordenCompra}|{invoice.datosAdicionales}|{invoice.codigoestablecimientosunat}|{invoice.montototalimpuestos}|{invoice.cdgcodigomotivo}|{invoice.cdgporcentaje}|" +
                         $"{invoice.descuentosGlobales}|{invoice.cdgmontobasecargo}|{invoice.sumimpuestosopgratuitas}|{invoice.totalvalorventa}|{invoice.totalprecioventa}|" +
-                        $"{invoice.monredimporttotal}||||||{invoice.estado}||{invoice.origen}|");
+                        $"{invoice.monredimporttotal}|||||||||");
 
                     var currentDetails = invoiceDetails.Where(x => x.serieNumero == invoice.serieNumero).ToList();
 
@@ -757,7 +757,7 @@ namespace TM.FECentralizada.Business
             {
                 foreach (BillHeader Bill in Bills)
                 {
-                    double montoBaseRetencion = 0;
+                    
 
                     writer.WriteLine($"C|{Bill.serieNumero}|{Bill.fechaEmision}|{Bill.Horadeemision}|" +
                          $"{Bill.tipoMoneda}|{Bill.numeroDocumentoEmisor}|{Bill.tipoDocumentoAdquiriente}|{Bill.numeroDocumentoAdquiriente}|" +

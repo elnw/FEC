@@ -70,7 +70,7 @@ namespace TM.FECentralizada.Cms.Response
                 Parallel.Invoke(
                                 () => Invoice(ParametersInvoce),
                                  () => Bill(ParametersBill),
-                () => CreditNote(ParametersCreditNote),
+                                () => CreditNote(ParametersCreditNote),
                                 () => DebitNote(ParametersDebitNote)
                          );
 

@@ -20,6 +20,7 @@ namespace TM.FECentralizada.Data
                 {
                     if (linea.StartsWith("C"))
                     {
+                        var fields = linea.Split('|');
                         objBillHeader = new InvoiceHeader()
                         {
                             serieNumero = linea.Split('|')[1].Trim(),
@@ -72,6 +73,15 @@ namespace TM.FECentralizada.Data
                             origen = "MA",
                             estado = "PE",
                             fechaRegistro = timestamp.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT),
+                            formaPago = (fields.Length >= 46 ? fields[45] : ""),
+                            montoPendientePago = (fields.Length >= 47 ? fields[46] : ""),
+                            idCuotas = (fields.Length >= 48 ? fields[47] : ""),
+                            montoPagoUnicoCuotas = (fields.Length >= 49 ? Convert.ToSingle(fields[48]) : 0),
+                            fechaPagoUnico = (fields.Length >= 50 ? fields[49] : ""),
+                            rigvcodigo = (fields.Length >= 51 ? (fields[50]) : ""),
+                            porcentajeRetencion = (fields.Length >= 52 ? (fields[51]) : ""),
+                            totalRetencion = (fields.Length >= 53 ? (fields[52]) : ""),
+                            montoBaseRetencion = (fields.Length >= 54 ? (String.IsNullOrEmpty(fields[53]) ? 0 : Convert.ToSingle(fields[53])) : 0)
                             //totalRetencion = dr["TOTALRETENCION"].ToString(),
                             //porcentajeRetencion = dr["PORCENTAJERETENCION"].ToString()*/
                         };

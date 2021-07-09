@@ -615,7 +615,7 @@ namespace TM.FECentralizada.Business
 
                     var currentDetails = currentBills.Where(x => x.serieNumero == invoice.serieNumero).ToList();
 
-                    foreach (BillDetail billDetail in currentBills)
+                    foreach (BillDetail billDetail in currentDetails)
                     {
 
                         writer.WriteLine($"D|{billDetail.numeroOrdenItem}|{billDetail.unidadMedida}|{billDetail.cantidad}|" +

@@ -72,6 +72,12 @@ namespace TM.FECentralizada.Entities.Atis
         public string estadoSunat                         {get;set;}
         public string codigoSunat                         {get;set;}
         public string mensajeSunat { get; set; }
-
+        public string formaPago { get; set; }
+        public string montoPendientePago { get; set; }
+        public string idCuotas { get; set; }
+        public float montoPagoUnicoCuotas { get; set; }
+        public string fechaPagoUnico { get; set; }
+        public string rigvcodigo { get; set; }
+        public float montoBaseRetencion { get; set; }
     }
 }

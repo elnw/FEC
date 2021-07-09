@@ -14,17 +14,21 @@ namespace TM.FECentralizada.Atis.Read
         /// </summary>
         static void Main()
         {
-            Tools.Logging.Configure();
+#if DEBUG
+
+            AtisRead ob = new AtisRead();
+
+             ob.probar();
+
+#else
+ Tools.Logging.Configure();
             ServiceBase[] ServicesToRun;
             ServicesToRun = new ServiceBase[]
             {
                 new AtisRead()
             };
             ServiceBase.Run(ServicesToRun);
-
-           /* AtisRead ob = new AtisRead();
-
-            ob.probar();*/
+#endif
         }
     }
 }

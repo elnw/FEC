@@ -58,17 +58,14 @@ namespace TM.FECentralizada.Pacifyc.Response
                 List<Parameters> ParametersDebitNote = ParamsResponse.FindAll(x => x.KeyDomain.ToUpper().Equals(Tools.Constants.PacyficResponse_DebitNote.ToUpper())).ToList();
 
                 Tools.Logging.Info("Inicio : Procesar documentos de BD Pacyfic");
+                DebitNote(ParametersDebitNote);
+                //Parallel.Invoke(
+                //    ()=> Invoice(ParametersInvoce),
+                //    ()=> DebitNote(ParametersDebitNote),
+                //    ()=>CreditNote(ParametersCreditNote)
+                //    );
 
-                Parallel.Invoke(
-                    ()=> Invoice(ParametersInvoce),
-                    ()=> DebitNote(ParametersDebitNote),
-                    ()=>CreditNote(ParametersCreditNote)
-                    );
-
-                
-                //parallel invoke
-
-
+                Tools.Logging.Info("Fin : Procesar documentos de BD Pacyfic");
             }
             else
             {

@@ -68,13 +68,11 @@ namespace TM.FECentralizada.Atis.Read
                     List<Parameters> ParametersDebitNote = ParamsResponse.FindAll(x => x.KeyDomain.ToUpper().Equals(Tools.Constants.AtisRead_DebitNote.ToUpper())).ToList();
 
                     Tools.Logging.Info("Inicio : Procesar documentos de FTP Atis");
-                    //Invoice(ParametersInvoce);
                     //Bill(ParametersBill);
-                     //CreditNote(ParametersCreditNote);
-                    //DebitNote(ParametersDebitNote);
+                    //Invoice(ParametersInvoce);
                     Parallel.Invoke(
                                () => Invoice(ParametersInvoce),
-                               ()=>  Bill(ParametersBill),
+                               () => Bill(ParametersBill),
                                () => CreditNote(ParametersCreditNote),
                                () => DebitNote(ParametersDebitNote)
                         );
@@ -90,9 +88,9 @@ namespace TM.FECentralizada.Atis.Read
                 }
                 else
                 {
-                    Tools.Logging.Error("Ocurrió un error al obtener la configuración para pacyfic.");
+                    Tools.Logging.Error("Ocurrió un error al obtener la configuración para Atis.");
                 }
-                Tools.Logging.Info("Fin del Proceso: Lectura Pacyfic.");
+                Tools.Logging.Info("Fin del Proceso: Lectura Atis.");
             }
             catch (Exception ex)
             {
@@ -164,11 +162,11 @@ namespace TM.FECentralizada.Atis.Read
                                 ListInvoceHeader.AddRange(ListInvoceHeader2);
                                 ListInvoceDetail.AddRange(ListInvoceDetail2);
                             }
-
+                            Tools.Logging.Info("Fin : Obtener documentos de FTP Atis - Facturas");
 
                             Tools.Logging.Info("Inicio: Obtener configuración de correos electronicos - Facturas Atis");
-
                             Parameters mailParameter = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.MAIL_CONFIG);
+                            Tools.Logging.Info("Fin: Obtener configuración de correos electronicos - Facturas Atis");
 
                             if (configParameter != null)
                             {
@@ -177,6 +175,7 @@ namespace TM.FECentralizada.Atis.Read
                                 Tools.Logging.Info("Inicio : Registrar Auditoria");
 
                                 auditId = TM.FECentralizada.Business.Common.InsertAudit(DateTime.Now.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT), 3, Tools.Constants.NO_LEIDO, ListInvoceHeader.Count + ListInvoceDetail.Count, 1, serviceConfig.Norm);
+                                Tools.Logging.Info("Fin : Registrar Auditoria");
 
                                 if (auditId > 0)
                                 {
@@ -188,7 +187,7 @@ namespace TM.FECentralizada.Atis.Read
 
                                     ListInvoceDetail.RemoveAll(x => !ListInvoceHeader.Select(y => y.serieNumero).Contains(x.serieNumero));
                                     ListInvoceHeader.RemoveAll(x => !ListInvoceDetail.Select(y => y.serieNumero).Contains(x.serieNumero));
-
+                                    Tools.Logging.Info("Fin : Validar Documentos ");
 
                                     Tools.Logging.Info("Inicio : Notificación de Validación");
 
@@ -197,13 +196,16 @@ namespace TM.FECentralizada.Atis.Read
                                         Business.Common.SendFileNotification(mailConfig, validationMessage);
                                         //Business.Common.UpdateAudit(auditId, Tools.Constants.FALLA_VALIDACION, intentos);
                                     }
+                                    Tools.Logging.Info("Fin : Notificación de Validación");
 
                                     Tools.Logging.Info("Inicio : Actualizo Auditoria");
                                     Business.Common.UpdateAudit(auditId, Tools.Constants.LEIDO, intentos);
+                                    Tools.Logging.Info("Fin : Actualizo Auditoria");
 
                                     Tools.Logging.Info("Inicio : Insertar Documentos Validados ");
                                     Business.Common.BulkInsertListToTable(ListInvoceDetail, "FE_Factura_Detalle");
                                     Business.Common.BulkInsertListToTable(ListInvoceHeader, "FE_Factura_Cabecera");
+                                    Tools.Logging.Info("Fin : Insertar Documentos Validados ");
 
                                     Tools.Logging.Info("Inicio : enviar GFiscal ");
 
@@ -223,12 +225,15 @@ namespace TM.FECentralizada.Atis.Read
                                             resultPath = Business.Atis.CreateInvoiceFile193(ListInvoceHeader, ListInvoceDetail, System.IO.Path.GetTempPath());
                                         }
                                         Tools.FileServer.UploadFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, System.IO.Path.GetFileName(resultPath), System.IO.File.ReadAllBytes(resultPath));
+                                        Tools.Logging.Info("Fin : enviar GFiscal ");
 
                                         Tools.Logging.Info("Inicio :  Notificación de envio  GFiscal ");
-                                        Business.Common.SendFileNotification(mailConfig, $"Se envió correctamenteel documento: {System.IO.Path.GetFileName(resultPath)} a gfiscal");
-                                        Tools.Logging.Info("Inicio : Actualizo Auditoria");
+                                        Business.Common.SendFileNotification(mailConfig, $"Se envió correctamente el documento: {System.IO.Path.GetFileName(resultPath)} a gfiscal");
+                                        Tools.Logging.Info("Fin :  Notificación de envio  GFiscal ");
 
+                                        Tools.Logging.Info("Inicio : Actualizo Auditoria");
                                         Business.Common.UpdateAudit(auditId, Tools.Constants.ENVIADO_GFISCAL, intentos);
+                                        Tools.Logging.Info("Fin : Actualizo Auditoria");
 
                                         Tools.Logging.Info("Inicio :  Mover archivos procesados a ruta PROC ");
                                         foreach (string file in inputFilesFTP) {
@@ -236,7 +241,7 @@ namespace TM.FECentralizada.Atis.Read
                                             Tools.FileServer.UploadFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory + "/PROC/", file, System.IO.File.ReadAllBytes(System.IO.Path.GetTempPath()+"/"+ file));
                                             Tools.FileServer.DeleteFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory, file);
                                         };
-                                        Tools.Logging.Info("Inicio : Mover archivos procesados a ruta PROC ");
+                                        Tools.Logging.Info("Fin : Mover archivos procesados a ruta PROC ");
 
 
                                         //Tools.Logging.Info("Inicio : Actualizar fecha de envio");
@@ -248,7 +253,7 @@ namespace TM.FECentralizada.Atis.Read
                                 }
                                 else
                                 {
-                                    Tools.Logging.Error($"No se pudo recuperar el id de auditoria - Facturas pacyfic");
+                                    Tools.Logging.Error($"No se pudo recuperar el id de auditoria - Facturas Atis");
                                     Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
                                 }
                             }
@@ -291,7 +296,7 @@ namespace TM.FECentralizada.Atis.Read
             Mail mailConfig;
             FileServer fileServerConfig;
             bool isValid;
-            string validationMessage = "";
+            List<string> validationMessage = new List<string>();
             int auditId;
             int intentos = 0;
             DateTime timestamp = DateTime.Now;
@@ -322,7 +327,7 @@ namespace TM.FECentralizada.Atis.Read
                         {
                             serviceConfig = Business.Common.GetParameterDeserialized<ServiceConfig>(configParameter);
 
-                            Tools.Logging.Info("Inicio : Obtener documentos de FTP Atis - Facturas");
+                            Tools.Logging.Info("Inicio : Obtener documentos de FTP Atis - Boletas");
 
                             List<BillHeader> ListInvoceHeader = new List<BillHeader>();
                             List<BillDetail> ListInvoceDetail = new List<BillDetail>();
@@ -350,11 +355,12 @@ namespace TM.FECentralizada.Atis.Read
                                 ListInvoceHeader.AddRange(ListInvoceHeader2);
                                 ListInvoceDetail.AddRange(ListInvoceDetail2);
                             }
+                            Tools.Logging.Info("Fin : Obtener documentos de FTP Atis - Boletas");
 
-
-                            Tools.Logging.Info("Inicio: Obtener configuración de correos electronicos - Facturas Atis");
+                            Tools.Logging.Info("Inicio: Obtener configuración de correos electronicos - Boletas Atis");
 
                             Parameters mailParameter = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.MAIL_CONFIG);
+                            Tools.Logging.Info("Fin: Obtener configuración de correos electronicos - Boletas Atis");
 
                             if (configParameter != null)
                             {
@@ -363,38 +369,41 @@ namespace TM.FECentralizada.Atis.Read
                                 Tools.Logging.Info("Inicio : Registrar Auditoria");
 
                                 auditId = TM.FECentralizada.Business.Common.InsertAudit(DateTime.Now.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT), 3, Tools.Constants.NO_LEIDO, ListInvoceHeader.Count + ListInvoceDetail.Count, 1, serviceConfig.Norm);
+                                Tools.Logging.Info("Fin : Registrar Auditoria");
 
                                 if (auditId > 0)
                                 {
 
-                                    Tools.Logging.Info("Inicio : Validar Documentos ");
+                                    Tools.Logging.Info("Inicio : Validar Documentos - Boletas Atis");
 
-                                    isValid = Business.Atis.ValidateBills(ListInvoceHeader, ref validationMessage);
-                                    isValid &= Business.Atis.ValidateBillDetails(ListInvoceDetail, ref validationMessage);
+                                    isValid = Business.Atis.ValidateBills(ListInvoceHeader, validationMessage);
+                                    isValid &= Business.Atis.ValidateBillDetails(ListInvoceDetail, validationMessage);
 
 
                                     //eliminar
                                     ListInvoceDetail.RemoveAll(x => !ListInvoceHeader.Select(y => y.serieNumero).Contains(x.serieNumero));
                                     ListInvoceHeader.RemoveAll(x => !ListInvoceDetail.Select(y => y.serieNumero).Contains(x.serieNumero));
+                                    Tools.Logging.Info("Fin : Validar Documentos ");
 
-
-                                    Tools.Logging.Info("Inicio : Notificación de Validación");
+                                    Tools.Logging.Info("Inicio : Notificación de Validación - Boletas Atis");
 
                                     if (!isValid)
                                     {
                                         Business.Common.SendFileNotification(mailConfig, validationMessage);
                                         //Business.Common.UpdateAudit(auditId, Tools.Constants.FALLA_VALIDACION, intentos);
                                     }
+                                    Tools.Logging.Info("Fin : Notificación de Validación - Boletas Atis");
 
                                     Tools.Logging.Info("Inicio : Actualizo Auditoria");
                                     Business.Common.UpdateAudit(auditId, Tools.Constants.LEIDO, intentos);
+                                    Tools.Logging.Info("Fin : Actualizo Auditoria");
 
                                     Tools.Logging.Info("Inicio : Insertar Documentos Validados ");
                                     Business.Common.BulkInsertListToTable(ListInvoceDetail, "FE_Boleta_Detalle");
                                     Business.Common.BulkInsertListToTable(ListInvoceHeader, "FE_Boleta_Cabecera");
+                                    Tools.Logging.Info("Fin : Insertar Documentos Validados ");
 
-                                    Tools.Logging.Info("Inicio : enviar GFiscal ");
-
+                                    Tools.Logging.Info("Inicio : enviar GFiscal - Boleta Atis");
                                     Parameters fileParameter = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.FTP_CONFIG_OUTPUT);
                                     FileServer fileServerConfigOut = Business.Common.GetParameterDeserialized<FileServer>(fileParameter);
 
@@ -406,65 +415,66 @@ namespace TM.FECentralizada.Atis.Read
                                            resultPath = Business.Atis.CreateBillFile340(ListInvoceHeader, ListInvoceDetail, System.IO.Path.GetTempPath());
 
                                         }
-                                        else
-                                        {
-                                            //resultPath = Business.Atis.CreateInvoiceFile193(ListInvoceHeader, ListInvoceDetail, System.IO.Path.GetTempPath());
-                                        }
+                                        
                                         Tools.FileServer.UploadFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, System.IO.Path.GetFileName(resultPath), System.IO.File.ReadAllBytes(resultPath));
+                                        Tools.Logging.Info("Fin : enviar GFiscal - Boleta Atis");
 
                                         Tools.Logging.Info("Inicio :  Notificación de envio  GFiscal ");
-                                        Business.Common.SendFileNotification(mailConfig, $"Se envió correctamenteel documento: {System.IO.Path.GetFileName(resultPath)} a gfiscal");
-                                        Tools.Logging.Info("Inicio : Actualizo Auditoria");
+                                        Business.Common.SendFileNotification(mailConfig, $"Se envió correctamente el documento: {System.IO.Path.GetFileName(resultPath)} a gfiscal");
+                                        Tools.Logging.Info("Fin :  Notificación de envio  GFiscal ");
+
+                                        Tools.Logging.Info("Inicio : Actualizó Auditoria");
 
                                         Business.Common.UpdateAudit(auditId, Tools.Constants.ENVIADO_GFISCAL, intentos);
+                                        Tools.Logging.Info("Fin : Actualizó Auditoria");
 
-                                        Tools.Logging.Info("Inicio :  Mover archivos procesados a ruta PROC ");
+                                        Tools.Logging.Info("Inicio :  Mover archivos procesados a ruta PROC - Boletas Atis");
                                         foreach (string file in inputFilesFTP)
                                         {
                                             Tools.FileServer.DownloadFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory, file, true, System.IO.Path.GetTempPath());
                                             Tools.FileServer.UploadFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory + "/PROC/", file, System.IO.File.ReadAllBytes(System.IO.Path.GetTempPath() + "/" + file));
                                             Tools.FileServer.DeleteFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory, file);
                                         };
-                                        Tools.Logging.Info("Inicio : Mover archivos procesados a ruta PROC ");
+                                        Tools.Logging.Info("Inicio : Mover archivos procesados a ruta PROC - Boletas Atis");
 
 
                                     }
                                 }
                                 else
                                 {
-                                    Tools.Logging.Error($"No se pudo recuperar el id de auditoria - Facturas Atis");
+                                    Tools.Logging.Error($"No se pudo recuperar el id de auditoria - Boletas Atis");
                                     Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
                                 }
                             }
                             else
                             {
-                                Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.MAIL_CONFIG}");
+                                Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.MAIL_CONFIG} - Boletas Atis");
                                 //Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
                                 return;
                             }
                         }
                         else
                         {
-                            Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.KEY_CONFIG}");
+                            Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.KEY_CONFIG} - Boletas Atis");
                             //Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
                             return;
                         }
                     }
                     else
                     {
-                        Tools.Logging.Info("No se encontraron archivos por procesar - Atis Lectura");
+                        Tools.Logging.Info("No se encontraron archivos por procesar - Atis Boletas Lectura");
                         return;
                     }
                 }
                 else
                 {
-                    Tools.Logging.Info("No se encontraron archivos por procesar - Atis Lectura");
+                    Tools.Logging.Info("No se encontraron archivos por procesar - Atis Boletas Lectura");
                     return;
                 }
             }
             else
             {
-                Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.FTP_CONFIG_INPUT}");
+                Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.FTP_CONFIG_INPUT} - Atis Boletas Lectura");
                 //Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
                 return;
             }
@@ -539,7 +549,7 @@ namespace TM.FECentralizada.Atis.Read
                             }
 
 
-                            Tools.Logging.Info("Inicio: Obtener configuración de correos electronicos - Facturas Atis");
+                            Tools.Logging.Info("Inicio: Obtener configuración de correos electronicos - Notas de crédito Atis");
 
                             Parameters mailParameter = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.MAIL_CONFIG);
 
@@ -547,14 +557,14 @@ namespace TM.FECentralizada.Atis.Read
                             {
                                 mailConfig = Business.Common.GetParameterDeserialized<Mail>(mailParameter);
 
-                                Tools.Logging.Info("Inicio : Registrar Auditoria");
+                                Tools.Logging.Info("Inicio : Registrar Auditoria - Notas de crédito Atis");
 
                                 auditId = TM.FECentralizada.Business.Common.InsertAudit(DateTime.Now.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT), 3, Tools.Constants.NO_LEIDO, ListCreditNoteHeader.Count + ListCreditNoteDetail.Count, 1, serviceConfig.Norm);
 
                                 if (auditId > 0)
                                 {
 
-                                    Tools.Logging.Info("Inicio : Validar Documentos ");
+                                    Tools.Logging.Info("Inicio : Validar Documentos - Notas de crédito Atis ");
 
                                     isValid = Business.Atis.CheckCreditNoteHeaders(ListCreditNoteHeader, validationMessage);
 
@@ -563,7 +573,7 @@ namespace TM.FECentralizada.Atis.Read
                                     ListCreditNoteHeader.RemoveAll(x => !ListCreditNoteDetail.Select(y => y.serieNumero).Contains(x.serieNumero));
 
 
-                                    Tools.Logging.Info("Inicio : Notificación de Validación");
+                                    Tools.Logging.Info("Inicio : Notificación de Validación - Notas de crédito Atis");
 
                                     if (!isValid)
                                     {
@@ -571,14 +581,14 @@ namespace TM.FECentralizada.Atis.Read
                                         //Business.Common.UpdateAudit(auditId, Tools.Constants.FALLA_VALIDACION, intentos);
                                     }
 
-                                    Tools.Logging.Info("Inicio : Actualizo Auditoria");
+                                    Tools.Logging.Info("Inicio : Actualizo Auditoria - Notas de crédito Atis");
                                     Business.Common.UpdateAudit(auditId, Tools.Constants.LEIDO, intentos);
 
-                                    Tools.Logging.Info("Inicio : Insertar Documentos Validados ");
+                                    Tools.Logging.Info("Inicio : Insertar Documentos Validados  - Notas de crédito Atis");
                                     Business.Common.BulkInsertListToTable(ListCreditNoteDetail, "FE_Nota_Credito_Detalle");
                                     Business.Common.BulkInsertListToTable(ListCreditNoteHeader, "FE_Nota_Credito_Cabecera");
 
-                                    Tools.Logging.Info("Inicio : enviar GFiscal ");
+                                    Tools.Logging.Info("Inicio : enviar GFiscal  - Notas de crédito Atis");
 
                                     Parameters fileParameter = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.FTP_CONFIG_OUTPUT);
                                     FileServer fileServerConfigOut = Business.Common.GetParameterDeserialized<FileServer>(fileParameter);
@@ -597,59 +607,61 @@ namespace TM.FECentralizada.Atis.Read
                                         }
                                         Tools.FileServer.UploadFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, System.IO.Path.GetFileName(resultPath), System.IO.File.ReadAllBytes(resultPath));
 
-                                        Tools.Logging.Info("Inicio :  Notificación de envio  GFiscal ");
+                                        Tools.Logging.Info("Inicio :  Notificación de envio  GFiscal - Notas de crédito Atis");
                                         Business.Common.SendFileNotification(mailConfig, $"Se envió correctamente el documento: {System.IO.Path.GetFileName(resultPath)} a gfiscal");
-                                        Tools.Logging.Info("Inicio : Actualizo Auditoria");
+                                        Tools.Logging.Info("Fin :  Notificación de envio  GFiscal - Notas de crédito Atis");
 
+                                        Tools.Logging.Info("Inicio : Actualizo Auditoria - Notas de crédito Atis");
                                         Business.Common.UpdateAudit(auditId, Tools.Constants.ENVIADO_GFISCAL, intentos);
+                                        Tools.Logging.Info("Fin : Actualizo Auditoria - Notas de crédito Atis");
 
-                                        Tools.Logging.Info("Inicio :  Mover archivos procesados a ruta PROC ");
+                                        Tools.Logging.Info("Inicio :  Mover archivos procesados a ruta PROC - Notas de crédito Atis");
                                         foreach (string file in inputFilesFTP)
                                         {
                                             Tools.FileServer.DownloadFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory, file, true, System.IO.Path.GetTempPath());
                                             Tools.FileServer.UploadFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory + "/PROC/", file, System.IO.File.ReadAllBytes(System.IO.Path.GetTempPath() + "/" + file));
                                             Tools.FileServer.DeleteFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory, file);
                                         };
-                                        Tools.Logging.Info("Inicio : Mover archivos procesados a ruta PROC ");
+                                        Tools.Logging.Info("Fin : Mover archivos procesados a ruta PROC ");
 
 
                                     }
                                 }
                                 else
                                 {
-                                    Tools.Logging.Error($"No se pudo recuperar el id de auditoria - Facturas Atis");
+                                    Tools.Logging.Error($"No se pudo recuperar el id de auditoria - Notas de crédito Atis");
                                     Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
                                 }
                             }
                             else
                             {
-                                Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.MAIL_CONFIG}");
+                                Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.MAIL_CONFIG} - Notas de crédito Atis");
                                 //Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
                                 return;
                             }
                         }
                         else
                         {
-                            Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.KEY_CONFIG}");
+                            Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.KEY_CONFIG} - Notas de crédito Atis");
                             //Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
                             return;
                         }
                     }
                     else
                     {
-                        Tools.Logging.Info("No se encontraron archivos por procesar - Atis Lectura");
+                        Tools.Logging.Info("No se encontraron archivos por procesar - Atis Notas de crédito Lectura");
                         return;
                     }
                 }
                 else
                 {
-                    Tools.Logging.Info("No se encontraron archivos por procesar - Atis Lectura");
+                    Tools.Logging.Info("No se encontraron archivos por procesar - Atis Notas de crédito Lectura");
                     return;
                 }
             }
             else
             {
-                Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.FTP_CONFIG_INPUT}");
+                Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.FTP_CONFIG_INPUT}- Atis Notas de crédito Lectura");
                 //Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
                 return;
             }
@@ -668,9 +680,9 @@ namespace TM.FECentralizada.Atis.Read
             List<string> inputFilesFTP;
             List<List<string>> inputFiles = new List<List<string>>();
 
-            Tools.Logging.Info("Inicio: Obtener parámetros para lectura de notas de debito");
+            Tools.Logging.Info("Inicio: Obtener parámetros para lectura de notas de debito Lectura");
             Parameters ftpParameterInput = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.FTP_CONFIG_INPUT);
-            Tools.Logging.Info("Fin: Obtener parámetros para lectura de notas de debito");
+            Tools.Logging.Info("Fin: Obtener parámetros para lectura de notas de debito Lectura");
 
 
             if (ftpParameterInput != null)
@@ -684,15 +696,15 @@ namespace TM.FECentralizada.Atis.Read
                     inputFilesFTP = inputFilesFTP.Where(x => x.StartsWith("NDEB_")).ToList();
                     if (inputFilesFTP.Count > 0)
                     {
-                        Tools.Logging.Info("Inicio: Obtener norma para las notas de debito de Atis");
+                        Tools.Logging.Info("Inicio: Obtener norma para las notas de debito de Atis Lectura");
                         Parameters configParameter = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.KEY_CONFIG);
-                        Tools.Logging.Info("Fin: Obtener norma para las notas de debito de Atis");
+                        Tools.Logging.Info("Fin: Obtener norma para las notas de debito de Atis Lectura");
 
                         if (configParameter != null)
                         {
                             serviceConfig = Business.Common.GetParameterDeserialized<ServiceConfig>(configParameter);
 
-                            Tools.Logging.Info("Inicio : Obtener documentos de FTP Atis - Nota de Debito");
+                            Tools.Logging.Info("Inicio : Obtener documentos de FTP Atis - Nota de Debito Lectura");
 
                             List<DebitNoteHeader> ListDebitNoteHeader = new List<DebitNoteHeader>();
                             List<DebitNoteDetail> ListDebitNoteDetail = new List<DebitNoteDetail>();
@@ -720,49 +732,55 @@ namespace TM.FECentralizada.Atis.Read
                                 ListDebitNoteHeader.AddRange(ListInvoceHeader2);
                                 ListDebitNoteDetail.AddRange(ListInvoceDetail2);
                             }
+                            Tools.Logging.Info("Fin : Obtener documentos de FTP Atis - Nota de Debito Lectura");
 
-
-                            Tools.Logging.Info("Inicio: Obtener configuración de correos electronicos - Notas de debito Atis");
+                            Tools.Logging.Info("Inicio: Obtener configuración de correos electronicos - Notas de debito Atis Lectura");
 
                             Parameters mailParameter = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.MAIL_CONFIG);
+                            Tools.Logging.Info("Fin: Obtener configuración de correos electronicos - Notas de debito Atis Lectura");
 
                             if (configParameter != null)
                             {
                                 mailConfig = Business.Common.GetParameterDeserialized<Mail>(mailParameter);
 
-                                Tools.Logging.Info("Inicio : Registrar Auditoria");
-
+                                Tools.Logging.Info("Inicio : Registrar Auditoria - Notas de debito Atis Lectura");
                                 auditId = TM.FECentralizada.Business.Common.InsertAudit(DateTime.Now.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT), 3, Tools.Constants.NO_LEIDO, ListDebitNoteHeader.Count + ListDebitNoteDetail.Count, 1, serviceConfig.Norm);
+                                Tools.Logging.Info("Fin : Registrar Auditoria - Notas de debito Atis Lectura");
 
                                 if (auditId > 0)
                                 {
 
-                                    Tools.Logging.Info("Inicio : Validar Documentos ");
+                                    Tools.Logging.Info("Inicio : Validar Documentos - Notas de debito Atis Lectura");
 
                                     isValid = Business.Atis.CheckDebitNotes(ListDebitNoteHeader, validationMessages);
 
                                     ListDebitNoteDetail.RemoveAll(x => !ListDebitNoteHeader.Select(y => y.serieNumero).Contains(x.serieNumero));
                                     ListDebitNoteHeader.RemoveAll(x => !ListDebitNoteDetail.Select(y => y.serieNumero).Contains(x.serieNumero));
+                                    Tools.Logging.Info("Fin : Validar Documentos - Notas de debito Atis Lectura");
 
-
-                                    Tools.Logging.Info("Inicio : Notificación de Validación");
+                                    Tools.Logging.Info("Inicio : Notificación de Validación - Notas de debito Atis Lectura");
 
                                     if (!isValid)
                                     {
                                         Business.Common.SendFileNotification(mailConfig, validationMessage);
                                     }
 
-                                    Tools.Logging.Info("Inicio : Actualizo Auditoria");
-                                    Business.Common.UpdateAudit(auditId, Tools.Constants.LEIDO, intentos);
+                                    Tools.Logging.Info("Fin : Notificación de Validación - Notas de debito Atis Lectura");
 
-                                    Tools.Logging.Info("Inicio : Insertar Documentos Validados ");
+                                    Tools.Logging.Info("Inicio : Actualizo Auditoria - Notas de debito Atis Lectura");
+                                    Business.Common.UpdateAudit(auditId, Tools.Constants.LEIDO, intentos);
+                                    Tools.Logging.Info("Fin : Actualizo Auditoria - Notas de debito Atis Lectura");
+
+                                    Tools.Logging.Info("Inicio : Insertar Documentos Validados - Notas de debito Atis Lectura");
                                     Business.Common.BulkInsertListToTable(ListDebitNoteDetail, "FE_Nota_Debito_Detalle");
                                     Business.Common.BulkInsertListToTable(ListDebitNoteHeader, "FE_Nota_Debito_Cabecera");
+                                    Tools.Logging.Info("Fin : Insertar Documentos Validados - Notas de debito Atis Lectura");
 
-                                    Tools.Logging.Info("Inicio : enviar GFiscal ");
+                                    Tools.Logging.Info("Inicio : enviar GFiscal - Notas de debito Atis Lectura");
 
                                     Parameters fileParameter = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.FTP_CONFIG_OUTPUT);
                                     FileServer fileServerConfigOut = Business.Common.GetParameterDeserialized<FileServer>(fileParameter);
+                                    
 
                                     if (fileServerConfig != null)
                                     {
@@ -772,58 +790,61 @@ namespace TM.FECentralizada.Atis.Read
                                             resultPath = Business.Atis.CreateDebitNoteFile340(ListDebitNoteHeader, ListDebitNoteDetail, System.IO.Path.GetTempPath());
 
                                         }
-                                        else {
-                                           // resultPath = Business.Atis.CreateDebitNoteFile193(ListDebitNoteHeader, ListDebitNoteDetail, System.IO.Path.GetTempPath());
-                                        }
+                                        
                                         
                                         Tools.FileServer.UploadFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, System.IO.Path.GetFileName(resultPath), System.IO.File.ReadAllBytes(resultPath));
 
-                                        Tools.Logging.Info("Inicio :  Notificación de envio  GFiscal ");
+                                        Tools.Logging.Info("Fin : enviar GFiscal - Notas de debito Atis Lectura");
+
+                                        Tools.Logging.Info("Inicio :  Notificación de envio  GFiscal - Notas de debito Atis Lectura");
                                         Business.Common.SendFileNotification(mailConfig, $"Se envió correctamente el documento: {System.IO.Path.GetFileName(resultPath)} a gfiscal");
-                                        Tools.Logging.Info("Inicio : Actualizo Auditoria");
+                                        Tools.Logging.Info("Fin :  Notificación de envio  GFiscal - Notas de debito Atis Lectura");
+
+                                        Tools.Logging.Info("Inicio : Actualizo Auditoria - Notas de debito Atis Lectura");
 
                                         Business.Common.UpdateAudit(auditId, Tools.Constants.ENVIADO_GFISCAL, intentos);
+                                        Tools.Logging.Info("Fin : Actualizo Auditoria");
 
-                                        Tools.Logging.Info("Inicio :  Mover archivos procesados a ruta PROC ");
+                                        Tools.Logging.Info("Inicio :  Mover archivos procesados a ruta PROC - Notas de debito Atis Lectura");
                                         foreach (string file in inputFilesFTP)
                                         {
                                             Tools.FileServer.DownloadFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory, file, true, System.IO.Path.GetTempPath());
                                             Tools.FileServer.UploadFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory + "/PROC/", file, System.IO.File.ReadAllBytes(System.IO.Path.GetTempPath() + "/" + file));
                                             Tools.FileServer.DeleteFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory, file);
                                         }  
-                                        Tools.Logging.Info("Inicio : Mover archivos procesados a ruta PROC ");
+                                        Tools.Logging.Info("Fin : Mover archivos procesados a ruta PROC - Notas de debito Atis Lectura");
 
                                     }
                                 }
                                 else
                                 {
-                                    Tools.Logging.Error($"No se pudo recuperar el id de auditoria - Notas de debito Atis");
+                                    Tools.Logging.Error($"No se pudo recuperar el id de auditoria - Notas de debito Atis Lectura");
                                     Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
                                 }
                             }
                             else
                             {
-                                Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.MAIL_CONFIG}");
+                                Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.MAIL_CONFIG} - Notas de debito Atis Lectura");
                                 //Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
                                 return;
                             }
                         }
                         else
                         {
-                            Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.KEY_CONFIG}");
+                            Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.KEY_CONFIG} - Notas de debito Atis Lectura");
                             //Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
                             return;
                         }
                     }
                     else
                     {
-                        Tools.Logging.Info("No se encontraron archivos por procesar - Atis Lectura");
+                        Tools.Logging.Info("No se encontraron archivos por procesar - Notas de debito Atis Lectura");
                         return;
                     }
                 }
                 else
                 {
-                    Tools.Logging.Info("No se encontraron archivos por procesar - Atis Lectura");
+                    Tools.Logging.Info("No se encontraron archivos por procesar - Notas de debito Atis Lectura");
                     return;
                 }
             }

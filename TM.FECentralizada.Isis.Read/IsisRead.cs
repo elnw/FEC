@@ -71,13 +71,13 @@ namespace TM.FECentralizada.Isis.Read
                     List<Parameters> ParametersDebitNote = ParamsResponse.FindAll(x => x.KeyDomain.ToUpper().Equals( Tools.Constants.IsisRead_DebitNote.ToUpper())).ToList();
 
                     Tools.Logging.Info("Inicio : Procesar documentos de BD Isis");
-                    Invoice(ParametersInvoce);
-                    /*Parallel.Invoke(
+                   // Invoice(ParametersInvoce);
+                    Parallel.Invoke(
                                () => Invoice(ParametersInvoce),
                                () => Bill(ParametersBill),
                                () => CreditNote(ParametersCreditNote),
                                () => DebitNote(ParametersDebitNote)
-                        );*/
+                        );
                     Tools.Logging.Info("Fin : Procesar documentos de BD Isis");
 
                     //Obtengo la Configuración Intervalo de Tiempo
@@ -498,7 +498,7 @@ namespace TM.FECentralizada.Isis.Read
             {
                 serviceConfig = Business.Common.GetParameterDeserialized<ServiceConfig>(configParameter);
 
-                Tools.Logging.Info("Inicio : Obtener documentos de BD Pacyfic - Notas de débito");
+                Tools.Logging.Info("Inicio : Obtener documentos de BD Isis - Notas de débito");
                 List<DebitNoteHeader> debitNoteHeaders = Business.Isis.GetDebitNoteHeaders(timestamp, ref intentos, serviceConfig.maxAttemps);
                 List<DebitNoteDetail> debitNoteDetails = Business.Isis.GetDebitNoteDetails(timestamp);
 

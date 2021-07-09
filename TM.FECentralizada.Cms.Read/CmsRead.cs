@@ -55,10 +55,10 @@ namespace TM.FECentralizada.Cms.Read
             {
                 Tools.Logging.Info("Inicio del Proceso: Lectura Cms.");
 
-                Tools.Logging.Info("Inicio : Obtener Parámetros");
+                Tools.Logging.Info("Inicio : Obtener Parámetros - Lectura Cms");
                 //Método que Obtendrá los Parámetros.
                 List<Parameters> ParamsResponse = TM.FECentralizada.Business.Common.GetParametersByKey(new Parameters() { Domain = Tools.Constants.CmsRead, KeyDomain = "", KeyParam = "" });
-                Tools.Logging.Info("Fin : Obtener Parámetros");
+                Tools.Logging.Info("Fin : Obtener Parámetros - Lectura Cms");
 
                 if (ParamsResponse != null && ParamsResponse.Any())
                 {
@@ -90,9 +90,9 @@ namespace TM.FECentralizada.Cms.Read
                 }
                 else
                 {
-                    Tools.Logging.Error("Ocurrió un error al obtener la configuración para pacyfic.");
+                    Tools.Logging.Error("Ocurrió un error al obtener la configuración para cms.");
                 }
-                Tools.Logging.Info("Fin del Proceso: Lectura Pacyfic.");
+                Tools.Logging.Info("Fin del Proceso: Lectura Cms.");
             }
             catch (Exception ex)
             {
@@ -113,9 +113,9 @@ namespace TM.FECentralizada.Cms.Read
             List<string> inputFilesFTP;
             List<List<string>> inputFiles = new List<List<string>>();
 
-            Tools.Logging.Info("Inicio: Obtener parámetros para lectura");
+            Tools.Logging.Info("Inicio: Obtener parámetros para lectura - Facturas CMS");
             Parameters ftpParameterInput = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.FTP_CONFIG_INPUT);
-            Tools.Logging.Info("Fin: Obtener parámetros para lectura");
+            Tools.Logging.Info("Fin: Obtener parámetros para lectura  - Facturas CMS");
 
 
             if (ftpParameterInput != null)
@@ -175,28 +175,25 @@ namespace TM.FECentralizada.Cms.Read
                             {
                                 mailConfig = Business.Common.GetParameterDeserialized<Mail>(mailParameter);
 
-                                Tools.Logging.Info("Inicio : Registrar Auditoria");
+                                Tools.Logging.Info("Inicio : Registrar Auditoria - Facturas Cms");
 
                                 auditId = TM.FECentralizada.Business.Common.InsertAudit(DateTime.Now.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT), 5, Tools.Constants.NO_LEIDO, ListInvoceHeader.Count + ListInvoceDetail.Count, 1, serviceConfig.Norm);
+                                Tools.Logging.Info("Fin : Registrar Auditoria - Facturas Cms");
 
                                 if (auditId > 0)
                                 {
 
-                                    Tools.Logging.Info("Inicio : Validar Documentos ");
+                                    Tools.Logging.Info("Inicio : Validar Documentos - Facturas Cms");
 
                                     isValid = Business.Cms.ValidateInvoices(ListInvoceHeader, ref validationMessage);
                                     isValid &= Business.Cms.ValidateInvoiceDetail(ListInvoceDetail, ref validationMessage);
 
+                                    ListInvoceDetail.RemoveAll(x => !ListInvoceHeader.Select(y => y.serieNumero).Contains(x.serieNumero));
+                                    ListInvoceHeader.RemoveAll(x => !ListInvoceDetail.Select(y => y.serieNumero).Contains(x.serieNumero));
 
-                                    /*for(int i = 0; i < ListInvoceDetail.Count; i++)
-                                    {
-                                        if(!ListInvoceHeader.Exists(x => x.serieNumero == ListInvoceDetail[i].serieNumero))
-                                        {
-                                            ListInvoceDetail.RemoveAt(i);
-                                        }
-                                    }*/
+                                    Tools.Logging.Info("Fin : Validar Documentos - Facturas Cms");
 
-                                    Tools.Logging.Info("Inicio : Notificación de Validación");
+                                    Tools.Logging.Info("Inicio : Notificación de Validación - Facturas Cms");
 
                                     if (!isValid)
                                     {
@@ -204,14 +201,18 @@ namespace TM.FECentralizada.Cms.Read
                                         //Business.Common.UpdateAudit(auditId, Tools.Constants.FALLA_VALIDACION, intentos);
                                     }
 
-                                    Tools.Logging.Info("Inicio : Actualizo Auditoria");
-                                    Business.Common.UpdateAudit(auditId, Tools.Constants.LEIDO, intentos);
+                                    Tools.Logging.Info("Fin : Notificación de Validación - Facturas Cms");
 
-                                    Tools.Logging.Info("Inicio : Insertar Documentos Validados ");
+                                    Tools.Logging.Info("Inicio : Actualizo Auditoria - Facturas Cms");
+                                    Business.Common.UpdateAudit(auditId, Tools.Constants.LEIDO, intentos);
+                                    Tools.Logging.Info("Fin : Actualizo Auditoria - Facturas Cms");
+
+                                    Tools.Logging.Info("Inicio : Insertar Documentos Validados - Facturas Cms");
                                     Business.Common.BulkInsertListToTable(ListInvoceDetail, "FE_Factura_Detalle");
                                     Business.Common.BulkInsertListToTable(ListInvoceHeader, "FE_Factura_Cabecera");
+                                    Tools.Logging.Info("Fin : Insertar Documentos Validados - Facturas Cms");
 
-                                    Tools.Logging.Info("Inicio : enviar GFiscal ");
+                                    Tools.Logging.Info("Inicio : enviar GFiscal - Facturas Cms");
 
                                     Parameters fileParameter = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.FTP_CONFIG_OUTPUT);
                                     FileServer fileServerConfigOut = Business.Common.GetParameterDeserialized<FileServer>(fileParameter);
@@ -230,11 +231,15 @@ namespace TM.FECentralizada.Cms.Read
                                         }
                                         Tools.FileServer.UploadFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, System.IO.Path.GetFileName(resultPath), System.IO.File.ReadAllBytes(resultPath));
 
-                                        Tools.Logging.Info("Inicio :  Notificación de envio  GFiscal ");
-                                        Business.Common.SendFileNotification(mailConfig, $"Se envió correctamenteel documento: {System.IO.Path.GetFileName(resultPath)} a gfiscal");
-                                        Tools.Logging.Info("Inicio : Actualizo Auditoria");
+                                        Tools.Logging.Info("Fin : enviar GFiscal - Facturas Cms");
 
+                                        Tools.Logging.Info("Inicio :  Notificación de envio  GFiscal - Facturas Cms");
+                                        Business.Common.SendFileNotification(mailConfig, $"Se envió correctamente el documento: {System.IO.Path.GetFileName(resultPath)} a gfiscal");
+                                        Tools.Logging.Info("Fin :  Notificación de envio  GFiscal - Facturas Cms");
+
+                                        Tools.Logging.Info("Inicio : Actualizo Auditoria");
                                         Business.Common.UpdateAudit(auditId, Tools.Constants.ENVIADO_GFISCAL, intentos);
+                                        Tools.Logging.Info("Fin : Actualizo Auditoria");
 
                                         Tools.Logging.Info("Inicio :  Mover archivos procesados a ruta PROC ");
                                         foreach (string file in inputFilesFTP)
@@ -243,32 +248,32 @@ namespace TM.FECentralizada.Cms.Read
                                             Tools.FileServer.UploadFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory + "/PROC/", file, System.IO.File.ReadAllBytes(System.IO.Path.GetTempPath() + "/" + file));
                                             Tools.FileServer.DeleteFile(fileServerConfig.Host, fileServerConfig.Port, fileServerConfig.User, fileServerConfig.Password, fileServerConfig.Directory, file);
                                         };
-                                        Tools.Logging.Info("Inicio : Mover archivos procesados a ruta PROC ");
+                                        Tools.Logging.Info("Fin : Mover archivos procesados a ruta PROC ");
 
 
                                         //Tools.Logging.Info("Inicio : Actualizar fecha de envio");
                                         //actualizar documento factura -> agregar el nombre archivo alignet,fechaenvio,
-                                        //Business.Common.UpdateDocumentInvoice(System.IO.Path.GetFileName(resultPath), DateTime.Now.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT));
+                                        Business.Common.UpdateDocumentInvoice(System.IO.Path.GetFileName(resultPath), DateTime.Now.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT), $"'{String.Join("','", ListInvoceHeader.Select(x=>x.serieNumero))}'");
                                         //Business.Pacifyc.UpdatePickUpDate(ListInvoceHeader);
 
                                     }
                                 }
                                 else
                                 {
-                                    Tools.Logging.Error($"No se pudo recuperar el id de auditoria - Facturas pacyfic");
+                                    Tools.Logging.Error($"No se pudo recuperar el id de auditoria - Facturas cms");
                                     Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
                                 }
                             }
                             else
                             {
-                                Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.MAIL_CONFIG}");
+                                Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.MAIL_CONFIG} - Facturas cms");
                                 //Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
                                 return;
                             }
                         }
                         else
                         {
-                            Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.KEY_CONFIG}");
+                            Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.KEY_CONFIG} - Facturas cms");
                             //Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
                             return;
                         }
@@ -287,7 +292,7 @@ namespace TM.FECentralizada.Cms.Read
             }
             else
             {
-                Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.FTP_CONFIG_INPUT}");
+                Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.FTP_CONFIG_INPUT} - Facturas cms");
                 //Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
                 return;
             }
@@ -305,9 +310,9 @@ namespace TM.FECentralizada.Cms.Read
             List<string> inputFilesFTP;
             List<List<string>> inputFiles = new List<List<string>>();
 
-            Tools.Logging.Info("Inicio: Obtener parámetros para lectura de boletas");
+            Tools.Logging.Info("Inicio: Obtener parámetros para lectura de boletas - cms");
             Parameters ftpParameterInput = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.FTP_CONFIG_INPUT);
-            Tools.Logging.Info("Fin: Obtener parámetros para lectura de boletas");
+            Tools.Logging.Info("Fin: Obtener parámetros para lectura de boletas - cms");
 
 
             if (ftpParameterInput != null)
@@ -357,47 +362,48 @@ namespace TM.FECentralizada.Cms.Read
                                 ListBillHeader.AddRange(ListBillHeader2);
                                 ListBillDetail.AddRange(ListBillDetail2);
                             }
+                            Tools.Logging.Info("Fin : Obtener documentos de FTP Cms - Boletas");
 
-
-                            Tools.Logging.Info("Inicio: Obtener configuración de correos electronicos - Facturas Cms");
+                            Tools.Logging.Info("Inicio: Obtener configuración de correos electronicos - Boletas Cms");
 
                             Parameters mailParameter = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.MAIL_CONFIG);
+                            Tools.Logging.Info("Fin: Obtener configuración de correos electronicos - Boletas Cms");
 
                             if (configParameter != null)
                             {
                                 mailConfig = Business.Common.GetParameterDeserialized<Mail>(mailParameter);
 
-                                Tools.Logging.Info("Inicio : Registrar Auditoria");
-
+                                Tools.Logging.Info("Inicio : Registrar Auditoria - Boletas Cms");
                                 auditId = TM.FECentralizada.Business.Common.InsertAudit(DateTime.Now.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT), 5, Tools.Constants.NO_LEIDO, ListBillHeader.Count + ListBillDetail.Count, 1, serviceConfig.Norm);
+                                Tools.Logging.Info("Fin : Registrar Auditoria - Boletas Cms");
 
                                 if (auditId > 0)
                                 {
 
-                                    Tools.Logging.Info("Inicio : Validar Documentos ");
+                                    Tools.Logging.Info("Inicio : Validar Documentos - Cms Read Boletas");
 
                                     isValid = Business.Cms.ValidateBills(ListBillHeader, ref validationMessage);
                                     isValid &= Business.Cms.ValidateBillDetails(ListBillDetail, ref validationMessage);
 
 
-                                    /*for(int i = 0; i < ListInvoceDetail.Count; i++)
-                                    {
-                                        if(!ListInvoceHeader.Exists(x => x.serieNumero == ListInvoceDetail[i].serieNumero))
-                                        {
-                                            ListInvoceDetail.RemoveAt(i);
-                                        }
-                                    }*/
+                                    ListBillDetail.RemoveAll(x => !ListBillHeader.Select(y => y.serieNumero).Contains(x.serieNumero));
+                                    ListBillHeader.RemoveAll(x => !ListBillDetail.Select(y => y.serieNumero).Contains(x.serieNumero));
 
-                                    Tools.Logging.Info("Inicio : Notificación de Validación");
+                                    Tools.Logging.Info("Fin : Validar Documentos - Cms Read Boletas");
+
+
+                                    Tools.Logging.Info("Inicio : Notificación de Validación - Cms Read Boletas");
 
                                     if (!isValid)
                                     {
                                         Business.Common.SendFileNotification(mailConfig, validationMessage);
                                         //Business.Common.UpdateAudit(auditId, Tools.Constants.FALLA_VALIDACION, intentos);
                                     }
+                                    Tools.Logging.Info("Fin : Notificación de Validación - Cms Read Boletas");
 
                                     Tools.Logging.Info("Inicio : Actualizo Auditoria");
                                     Business.Common.UpdateAudit(auditId, Tools.Constants.LEIDO, intentos);
+                                    Tools.Logging.Info("Inicio : Actualizo Auditoria");
 
                                     Tools.Logging.Info("Inicio : Insertar Documentos Validados ");
                                     Business.Common.BulkInsertListToTable(ListBillDetail, "FE_Boleta_Detalle");
@@ -440,7 +446,7 @@ namespace TM.FECentralizada.Cms.Read
 
                                         //Tools.Logging.Info("Inicio : Actualizar fecha de envio");
                                         //actualizar documento factura -> agregar el nombre archivo alignet,fechaenvio,
-                                        //Business.Common.UpdateDocumentInvoice(System.IO.Path.GetFileName(resultPath), DateTime.Now.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT));
+                                        //Business.Common.UpdateBillState(System.IO.Path.GetFileName(resultPath), DateTime.Now.ToString(Tools.Constants.DATETIME_FORMAT_AUDIT));
                                         //Business.Pacifyc.UpdatePickUpDate(ListInvoceHeader);
 
                                     }
@@ -453,14 +459,14 @@ namespace TM.FECentralizada.Cms.Read
                             }
                             else
                             {
-                                Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.MAIL_CONFIG}");
+                                Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.MAIL_CONFIG}  - Boletas Cms");
                                 //Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
                                 return;
                             }
                         }
                         else
                         {
-                            Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.KEY_CONFIG}");
+                            Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.KEY_CONFIG}  - Boletas Cms");
                             //Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
                             return;
                         }
@@ -479,7 +485,7 @@ namespace TM.FECentralizada.Cms.Read
             }
             else
             {
-                Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.FTP_CONFIG_INPUT}");
+                Tools.Logging.Error($"No se insertó en base de datos el parámetro con llave: {Tools.Constants.FTP_CONFIG_INPUT}  - Boletas Cms");
                 //Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
                 return;
             }

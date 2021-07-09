@@ -215,7 +215,7 @@ namespace TM.FECentralizada.Sap.Read
                                 }
                                 else
                                 {
-                                    Tools.Logging.Error($"No se pudo recuperar el id de auditoria - Facturas pacyfic");
+                                    Tools.Logging.Error($"No se pudo recuperar el id de auditoria - Facturas sap");
                                     Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
                                 }
                             }
@@ -282,9 +282,9 @@ namespace TM.FECentralizada.Sap.Read
                     inputFilesFTP = inputFilesFTP.Where(x => x.StartsWith("BOLE_")).ToList();
                     if (inputFilesFTP.Count > 0)
                     {
-                        Tools.Logging.Info("Inicio: Obtener norma para las boletas de Atis");
+                        Tools.Logging.Info("Inicio: Obtener norma para las boletas de sap");
                         Parameters configParameter = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.KEY_CONFIG);
-                        Tools.Logging.Info("Fin: Obtener norma para las boletas de Atis");
+                        Tools.Logging.Info("Fin: Obtener norma para las boletas de sap");
 
                         if (configParameter != null)
                         {
@@ -357,7 +357,7 @@ namespace TM.FECentralizada.Sap.Read
                                         Tools.FileServer.UploadFile(fileServerConfigOut.Host, fileServerConfigOut.Port, fileServerConfigOut.User, fileServerConfigOut.Password, fileServerConfigOut.Directory, System.IO.Path.GetFileName(resultPath), System.IO.File.ReadAllBytes(resultPath));
 
                                         Tools.Logging.Info("Inicio :  Notificación de envio  GFiscal ");
-                                        Business.Common.SendFileNotification(mailConfig, $"Se envió correctamenteel documento: {System.IO.Path.GetFileName(resultPath)} a gfiscal");
+                                        Business.Common.SendFileNotification(mailConfig, $"Se envió correctamente el documento: {System.IO.Path.GetFileName(resultPath)} a gfiscal");
                                         Tools.Logging.Info("Inicio : Actualizo Auditoria");
 
                                         Business.Common.UpdateAudit(auditId, Tools.Constants.ENVIADO_GFISCAL, intentos);
@@ -461,7 +461,7 @@ namespace TM.FECentralizada.Sap.Read
                             ListCreditNoteHeader = documents.Item1;
                             ListCreditNoteDetail = documents.Item2;
 
-                            Tools.Logging.Info("Inicio: Obtener configuración de correos electronicos - Facturas Sap");
+                            Tools.Logging.Info("Inicio: Obtener configuración de correos electronicos - Notas de crédito Sap");
 
                             Parameters mailParameter = oListParameters.FirstOrDefault(x => x.KeyParam == Tools.Constants.MAIL_CONFIG);
 
@@ -537,7 +537,7 @@ namespace TM.FECentralizada.Sap.Read
                                 }
                                 else
                                 {
-                                    Tools.Logging.Error($"No se pudo recuperar el id de auditoria - Facturas Sap");
+                                    Tools.Logging.Error($"No se pudo recuperar el id de auditoria - Notas de crédito Sap");
                                     Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
                                 }
                             }
@@ -699,7 +699,7 @@ namespace TM.FECentralizada.Sap.Read
                                 }
                                 else
                                 {
-                                    Tools.Logging.Error($"No se pudo recuperar el id de auditoria - Facturas Sap");
+                                    Tools.Logging.Error($"No se pudo recuperar el id de auditoria - notas de debito Sap");
                                     Business.Common.UpdateAudit(auditId, Tools.Constants.ERROR_FECENTRALIZADA, intentos);
                                 }
                             }

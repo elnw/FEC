@@ -62,12 +62,6 @@ namespace TM.FECentralizada.Traceability
                 if (ParamsResponse != null && ParamsResponse.Any())
                 {
                     Traceability(ParamsResponse);
-                    /* Parallel.Invoke(
-                                () => Invoice(ParametersInvoce),
-                                () => Bill(ParametersBill),
-                                () => CreditNote(ParametersCreditNote),
-                                () => DebitNote(ParametersDebitNote)
-                         );*/
 
                 }
                 else
